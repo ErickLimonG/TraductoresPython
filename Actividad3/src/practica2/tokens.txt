@@ -56,3 +56,16 @@ AxEL
 <<
 >>
 "Leo"
+123.456.789
+海
+?
+1Variable
+!Queso
+1.
+.1
+"
+'
+'BETO
+"GOJO
+
+

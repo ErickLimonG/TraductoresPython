@@ -7,6 +7,7 @@ package practica2;
 /*Las importaciones necesarias*/
 import java_cup.runtime.*;
 
+
 %%
 
 %class LexicoPython
@@ -14,6 +15,16 @@ import java_cup.runtime.*;
 %cup
 %line
 %column
+
+%{
+    // Función para reportar errores léxicos
+    private void reportarError(String tipoError, String textoError, int linea, int columna, String descripcion) {
+        System.out.println(
+            tipoError + " '" + textoError + "' en la linea " + linea + ", columna " + columna + 
+            ". Descripcion: " + descripcion
+        );
+    }
+%}
 
 %{ 
  private Symbol symbol(int type, Object value) {
@@ -265,7 +276,36 @@ System.out.println("End of file");
     System.out.println("STRING_SIMPLE=" + yytext());
 }
 
+
 /* Cualquier otro carácter no reconocido */
 . {
-    System.out.println("ERRORCITO=" + yytext());
+    reportarError("Caracter no reconocido", yytext(), yyline + 1, yycolumn + 1, 
+                  "El caracter no es valido en el lenguaje.");
+}
+
+/* Identificador mal formado (comienza con un numero o contiene caracteres no permitidos) */
+[0-9]+[a-zA-Z_]+[a-zA-Z0-9_]* {
+    reportarError("Identificador mal formado", yytext(), yyline + 1, yycolumn + 1, 
+                  "Los identificadores no pueden comenzar con un numero.");
+}
+
+/* Numero mal formado (multiples puntos decimales o caracteres no validos) */
+\d+\.\d+\.\d+ {
+    reportarError("Numero mal formado", yytext(), yyline + 1, yycolumn + 1, 
+                  "Los numeros no pueden tener multiples puntos decimales.");
+}
+
+/* Cadenas mal formadas (sin cerrar) */
+\"([^\"\\\r\n]|\\.)*\r?\n {
+    reportarError("Cadena doble sin cerrar", yytext(), yyline + 1, yycolumn + 1, 
+                  "La cadena de texto no se cerro correctamente. Falta la comilla doble de cierre (\").");
+}
+\'([^\'\\\r\n]|\\.)*\r?\n {
+    reportarError("Cadena simple sin cerrar", yytext(), yyline + 1, yycolumn + 1, 
+                  "La cadena de texto no se cerro correctamente. Falta la comilla simple de cierre (').");
+}
+
+/* Números flotantes válidos */
+([0-9]+\.[0-9]* | \.[0-9]+) {
+    System.out.println("FLOAT=" + yytext());
 }
