@@ -1,0 +1,58 @@
+
+#PIEDRA FLORES AXEL JESUS
+#LIMON GUEVARA ERICK ANTONIO
+#RODRIGUEZ MARTINEZ LEONARDO JAVIER
+/* SDNSJKAFSKJAFSAJKFSAFKSFAN */
+    
+
+ 
+    
+                            
+                
+                
+            
+True    
+REGEX
+24E24424
+2331
+{
+}
+.
+9
+
+erick_name
+int
+float
+#jose 1
+else
+if
+{
+}
+!
+/
+\
+x
+y
+z
+"4134"
+""
+''
+!>
+>=
+=
+>!
+GOKU
+VEGETA
+1
+1.5
+leo
+AxEL
+.
+:
+&
+^
+|
+~
+<<
+>>
+"Leo"
