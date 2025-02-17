@@ -1,0 +1,12 @@
+import os
+import os2
+import paquete.libreria
+erick='erick'
+leo=3.1416
+beto= "miku"
+erick='erick
+leo=.1416
+beto= "miku
+
+
+

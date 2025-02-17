@@ -1,0 +1,63 @@
+/* LIMON GUVERA ERICK ANTONIO  */
+/* PIEDRA FLORES AXEL JESUS  */
+/* RODRIGUEZ MARTINEZ LEONARDO JAVIER  */
+
+package practica4;
+
+import java_cup.runtime.*;
+
+/* Terminales palabras reservadas */
+terminal TRUE, FALSE, NONE, AND, OR, NOT, IS, IF, ELSE,
+         ELIF, FOR, WHILE, BREAK, CONTINUE, PASS, TRY, EXCEPT, FINALLY,
+         RAISE, ASSERT, DEF, RETURN, LAMBDA, YIELD, CLASS, IMPORT, FROM,
+         AS, DEL, GLOBAL, WITH, NONLOCAL, ASYNC, AWAIT, PACKAGE, LINE_COMMENT, IN;
+
+/* Terminales operadores */
+terminal PLUS, MINUS, MULTIPLY, DIVIDE, EQUAL, DOUBLE_EQUAL, NOT_EQUAL, 
+LESS_THAN, GREATER_THAN, LESS_EQUAL, GREATER_EQUAL, MODULE;
+
+/* Terminales símbolos */
+terminal DOT, SEMICOLON, COLON, COMMA, LBRACE, RBRACE, LBRACKET, RBRACKET, 
+BACK_SLASH, PIPE, LPAREN, RPAREN;
+
+/* Terminales expresiones regulares */
+terminal IDENTIFIER, INTEGER, FLOAT, STRING, STRING_SIMPLE, CHAR;
+
+/*Terminales Error*/
+terminal UNCLOSED_STRING,MALFORMED_NUMBER,MALFORMED_IDENTIFIER;
+
+/* No terminales */
+non terminal declaraciones, dec_importaciones, dec_variable, expresion;
+
+start with declaraciones;
+
+/* Reglas de la gramática */
+declaraciones ::=
+    declaraciones dec_importaciones |
+    declaraciones dec_variable |
+    dec_importaciones |
+    dec_variable
+    ;
+
+/* Regla para importaciones */
+dec_importaciones ::= 
+    IMPORT IDENTIFIER DOT IDENTIFIER |
+    IMPORT IDENTIFIER
+    {: System.out.println("Es una declaracion de importacion"); :};
+
+/* Regla para declaraciones de variables */
+dec_variable ::= 
+    IDENTIFIER EQUAL expresion
+    {: System.out.println("Es una declaracion de variable"); :};
+
+/* Expresiones permitidas en asignaciones */
+expresion ::= 
+    INTEGER |
+    FLOAT |
+    STRING |
+    STRING_SIMPLE |
+    IDENTIFIER |
+    UNCLOSED_STRING  {: System.out.println("Error: Cadena mal formada"); :} |
+    MALFORMED_NUMBER  {: System.out.println("Error: Numero mal formado"); :} |
+    MALFORMED_IDENTIFIER {: System.out.println("Error: Identificador mal formado"); :}
+    ;
