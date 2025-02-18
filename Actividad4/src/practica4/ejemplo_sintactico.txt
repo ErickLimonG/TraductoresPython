@@ -1,12 +1,15 @@
 import os
 import os2
-import paquete.libreria
+import paquete.libreria.etc.etc.etc.etc
 erick='erick'
 leo=3.1416
 beto= "miku"
 erick='erick
 leo=.1416
 beto= "miku
-
+erick, leo, axel, rafa = 0, 1, 2, 3
+e, l = 3, 2
+erick, leo, axel = "Erick", "Leo", "Axel"
+e, l = 3.1, 2.2
 
 

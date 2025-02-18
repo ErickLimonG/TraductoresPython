@@ -6,6 +6,12 @@ package practica4;
 
 import java_cup.runtime.*;
 
+parser code{:
+    public void syntax_error(Symbol s){
+        System.out.println("Error sintactico en ["+s.left+":"+(s.right-1)+"], token inesperado "+s.value);
+    }
+:}
+
 /* Terminales palabras reservadas */
 terminal TRUE, FALSE, NONE, AND, OR, NOT, IS, IF, ELSE,
          ELIF, FOR, WHILE, BREAK, CONTINUE, PASS, TRY, EXCEPT, FINALLY,
@@ -23,27 +29,45 @@ BACK_SLASH, PIPE, LPAREN, RPAREN;
 /* Terminales expresiones regulares */
 terminal IDENTIFIER, INTEGER, FLOAT, STRING, STRING_SIMPLE, CHAR;
 
-/*Terminales Error*/
-terminal UNCLOSED_STRING,MALFORMED_NUMBER,MALFORMED_IDENTIFIER;
+/* Terminales Error */
+terminal UNCLOSED_STRING, MALFORMED_NUMBER, MALFORMED_IDENTIFIER;
 
 /* No terminales */
-non terminal declaraciones, dec_importaciones, dec_variable, expresion;
+non terminal declaraciones, bloque_importaciones,
+             bloque_variables, dec_importaciones,
+             dec_variable, expresion, lista_identificador_punto
+             ;
 
 start with declaraciones;
 
 /* Reglas de la gramática */
-declaraciones ::=
-    declaraciones dec_importaciones |
-    declaraciones dec_variable |
-    dec_importaciones |
+declaraciones ::= 
+    bloque_importaciones bloque_variables |
+    bloque_importaciones |
+    bloque_variables
+    ;
+
+/* Bloque de importaciones */
+bloque_importaciones ::= 
+    bloque_importaciones dec_importaciones |
+    dec_importaciones
+    ;
+
+/* Bloque de variables */
+bloque_variables ::= 
+    bloque_variables dec_variable |
     dec_variable
     ;
 
-/* Regla para importaciones */
-dec_importaciones ::= 
-    IMPORT IDENTIFIER DOT IDENTIFIER |
-    IMPORT IDENTIFIER
+/* Regla para importaciones con múltiples niveles */
+dec_importaciones ::=
+    IMPORT lista_identificador_punto
     {: System.out.println("Es una declaracion de importacion"); :};
+
+/* Regla auxiliar para manejar múltiples identificadores separados por DOT */
+lista_identificador_punto ::=
+    lista_identificador_punto DOT IDENTIFIER |
+    IDENTIFIER;
 
 /* Regla para declaraciones de variables */
 dec_variable ::= 
