@@ -1,0 +1,9 @@
+x + y * 5
+(a - b) / c
+10 > 5 and 3 <= 4
+(x + y) * (z - w)
+ 
+x + * y  # Operador sin término
+10 >  # Comparación sin expresión aritmética
+(a - b  # Paréntesis desbalanceados
+5 / (2 + )  # Paréntesis desbalanceados

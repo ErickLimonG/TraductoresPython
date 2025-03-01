@@ -1,0 +1,180 @@
+/* LIMON GUVERA ERICK ANTONIO  */
+/* PIEDRA FLORES AXEL JESUS  */
+/* RODRIGUEZ MARTINEZ LEONARDO JAVIER  */
+
+
+package practica4;
+
+
+import java_cup.runtime.*;
+
+
+parser code{:
+   public void syntax_error(Symbol s){
+       System.out.println("Error sintactico en ["+s.left+":"+(s.right-1)+"], token inesperado "+s.value);
+   }
+:}
+
+
+/* Terminales palabras reservadas */
+terminal TRUE, FALSE, NONE, AND, OR, NOT, IS, IF, ELSE,
+        ELIF, FOR, WHILE, BREAK, CONTINUE, PASS, TRY, EXCEPT, FINALLY,
+        RAISE, ASSERT, DEF, RETURN, LAMBDA, YIELD, CLASS, IMPORT, FROM,
+        AS, DEL, GLOBAL, WITH, NONLOCAL, ASYNC, AWAIT, PACKAGE, LINE_COMMENT, IN;
+
+
+/* Terminales operadores */
+terminal PLUS, MINUS, MULTIPLY, DIVIDE, EQUAL, DOUBLE_EQUAL, NOT_EQUAL,
+LESS_THAN, GREATER_THAN, LESS_EQUAL, GREATER_EQUAL, MODULE;
+
+
+/* Terminales símbolos */
+terminal DOT, SEMICOLON, COLON, COMMA, LBRACE, RBRACE, LBRACKET, RBRACKET,
+BACK_SLASH, PIPE, LPAREN, RPAREN;
+
+
+/* Terminales expresiones regulares */
+terminal IDENTIFIER, INTEGER, FLOAT, STRING, STRING_SIMPLE, CHAR;
+
+
+/* Terminales Error */
+terminal UNCLOSED_STRING, MALFORMED_NUMBER, MALFORMED_IDENTIFIER;
+
+
+/* No terminales */
+non terminal declaraciones, bloque_importaciones,
+            bloque_variables, dec_importaciones,
+            dec_variable, lista_identificador_punto,
+            valor_asignacion, numero, cadena
+            ;
+
+
+non terminal expresion, expresion_aritmetica,
+            termino, factor, expresion_logica,
+            termino_logico, lista_expresiones
+            ;
+
+
+start with lista_expresiones;
+
+
+lista_expresiones ::=
+                 lista_expresiones expresion |
+                 expresion
+                 ;
+
+
+/* Reglas de la gramática */
+declaraciones ::=
+   bloque_importaciones bloque_variables |
+   bloque_importaciones |
+   bloque_variables
+   ;
+
+
+/* Bloque de importaciones */
+bloque_importaciones ::=
+   bloque_importaciones dec_importaciones |
+   dec_importaciones
+   ;
+
+
+/* Bloque de variables */
+bloque_variables ::=
+   bloque_variables dec_variable |
+   dec_variable
+   ;
+
+
+/* Regla para importaciones con múltiples niveles */
+dec_importaciones ::=
+   IMPORT lista_identificador_punto
+   {: System.out.println("Es una declaracion de importacion"); :};
+
+
+/* Regla auxiliar para manejar múltiples identificadores separados por DOT */
+lista_identificador_punto ::=
+   lista_identificador_punto DOT IDENTIFIER |
+   IDENTIFIER;
+
+
+/* Regla para declaraciones de variables */
+dec_variable ::=
+   IDENTIFIER EQUAL valor_asignacion
+   {: System.out.println("Es una declaracion de variable"); :};
+
+
+/* valores de asignaciones */
+valor_asignacion ::=
+   numero |
+   cadena |
+   IDENTIFIER
+   ;
+
+
+numero ::=
+   INTEGER | FLOAT
+   ;
+
+
+cadena ::=
+   STRING |
+   STRING_SIMPLE
+   ;
+
+/* Definición de expresiones aritméticas y lógicas */
+expresion ::=
+   expresion_aritmetica {: System.out.println("Es una expresion aritmetica"); :} |
+   expresion_logica {: System.out.println("Es una expresion logica"); :}
+   ;
+
+
+expresion_aritmetica ::=
+   termino {: System.out.println("Es una expresion aritmetica basica"); :} |
+   expresion_aritmetica PLUS termino  {: System.out.println("Operacion de suma "); :} |
+   expresion_aritmetica MINUS termino {: System.out.println("Operacion de resta "); :} |
+   expresion_aritmetica PLUS error    {: System.out.println("EXPRESION ARITMETICA->SUM,ERROR: SE ESPERABA UN TERMINO"); :} |
+   expresion_aritmetica MINUS error   {: System.out.println("EXPRESION ARITMETICA->MINUS,ERROR: SE ESPERABA UN TERMINO"); :}
+   ;
+
+
+termino ::=
+   factor                       {: System.out.println("Es un termino "); :} |
+   termino MULTIPLY factor      {: System.out.println("Operacion de multiplicacion "); :} |
+   termino DIVIDE factor        {: System.out.println("Operacion de division "); :} |
+   termino MULTIPLY error       {: System.out.println("TERMINO->MULTIPLICACION,ERROR: SE ESPERABA UN FACTOR"); :} |
+   termino DIVIDE error         {: System.out.println("TERMINO->DIVISION,ERROR: SE ESPERABA UN FACTOR"); :}
+   ;
+
+
+factor ::=
+   IDENTIFIER |
+   numero |
+   LPAREN expresion_aritmetica RPAREN {: System.out.println("Expresion aritmetica entre parentesis"); :} |
+   LPAREN expresion_aritmetica error {: System.out.println("Factor->Expresion aritmetica entre parentesis, ERROR: PARENTESIS DESBALANCEADOS"); :}
+   ;
+
+
+expresion_logica ::=
+   termino_logico                       {: System.out.println("Es un termino logico "); :} |
+   expresion_logica AND termino_logico  {: System.out.println("Expresion logica(AND)"); :} |
+   expresion_logica OR termino_logico   {: System.out.println("Expresion logica(OR)"); :}
+   expresion_logica AND error  {: System.out.println("Expresion logica(AND), ERROR: SE ESPERABA UN TERMINO LOGICO"); :} |
+   expresion_logica OR  error   {: System.out.println("Expresion logica(OR), ERROR: SE ESPERABA UN TERMINO LOGICO"); :}
+   ;
+
+
+termino_logico ::=
+   expresion_aritmetica DOUBLE_EQUAL expresion_aritmetica {: System.out.println("Comparacion de igualdad"); :} |
+   expresion_aritmetica NOT_EQUAL expresion_aritmetica {: System.out.println("Comparacion de desigualdad"); :} |
+   expresion_aritmetica GREATER_THAN expresion_aritmetica {: System.out.println("Comparacion de mayor que"); :} |
+   expresion_aritmetica LESS_THAN expresion_aritmetica {: System.out.println("Comparacion de menor que"); :} |
+   expresion_aritmetica GREATER_EQUAL expresion_aritmetica {: System.out.println("Comparacion de mayor o igual"); :} |
+   expresion_aritmetica LESS_EQUAL expresion_aritmetica {: System.out.println("Comparacion de menor o igual"); :} |
+   expresion_aritmetica DOUBLE_EQUAL error {: System.out.println("TERMINO LOGICO->Comparacion de igualdad, ERROR: Se esperaba una expresion aritmetica"); :} |
+   expresion_aritmetica NOT_EQUAL error {: System.out.println("TERMINO LOGICO->Comparacion de desigualdad, ERROR: Se esperaba una expresion aritmetica"); :} |
+   expresion_aritmetica GREATER_THAN error {: System.out.println("TERMINO LOGICO->Comparacion de mayor que, ERROR: Se esperaba una expresion aritmetica"); :} |
+   expresion_aritmetica LESS_THAN error {: System.out.println("TERMINO LOGICO->Comparacion de menor que, ERROR: Se esperaba una expresion aritmetica"); :} |
+   expresion_aritmetica GREATER_EQUAL error {: System.out.println("TERMINO LOGICO->Comparacion de mayor o igual, ERROR: Se esperaba una expresion aritmetica"); :} |
+   expresion_aritmetica LESS_EQUAL error {: System.out.println("TERMINO LOGICO->Comparacion de menor o igual, ERROR: Se esperaba una expresion aritmetica"); :}
+   ;
