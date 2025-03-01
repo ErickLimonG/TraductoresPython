@@ -21,7 +21,9 @@
 
 *.xml
 *.mf
+*.iml
 
+.idea/
 build/
 nbproject/
 
