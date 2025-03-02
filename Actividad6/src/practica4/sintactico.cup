@@ -196,14 +196,14 @@ estructura_control ::=
 /* Sentencia if con manejo de errores */
 sentencia_if ::=
     IF expresion COLON bloque ELSE COLON bloque
-    {: System.out.println("Sentencia if-else válida"); :} |
+    {: System.out.println("=============SENTENCIA IF-ELSE valida============="); :} |
     IF expresion COLON bloque ELSE error
     ;
 
 /* Sentencia while con manejo de errores */
 sentencia_while ::=
     WHILE expresion COLON bloque
-    {: System.out.println("Sentencia while válida"); :} |
+    {: System.out.println("=============SENTENCIA WHILE valida============="); :} |
     WHILE expresion COLON error
     {: System.out.println("ERROR: Se esperaba un bloque después de WHILE"); :}
     ;
@@ -211,7 +211,7 @@ sentencia_while ::=
 /* Sentencia for con manejo de errores */
 sentencia_for ::=
     FOR IDENTIFIER IN RANGE LPAREN numero RPAREN COLON bloque
-    {: System.out.println("Sentencia for válida"); :}
+    {: System.out.println("=============SENTENCIA FOR valida============="); :}
     ;
 
 /* Bloque con manejo de errores */
@@ -225,11 +225,11 @@ bloque ::=
 /* Sentencia con manejo de errores */
 sentencia ::=
     expresion
-    {: System.out.println("Sentencia de expresión"); :} |
+    {: System.out.println("Sentencia de expresion"); :} |
     estructura_control
     {: System.out.println("Sentencia de control"); :} |
     declaracion
-    {: System.out.println("Sentencia de declaración"); :}
+    {: System.out.println("Sentencia de declaracion"); :}
     ;
 
 // No usado
