@@ -1,0 +1,16 @@
+class casa:
+    valor = "pedro"
+    def pepe():
+        pass
+    def jose():
+        for i in range(5):
+            i = i+1
+        for j in range(10):
+            j = j+1
+        if 1>1:
+            j = 1
+        else:
+            j=1
+
+
+

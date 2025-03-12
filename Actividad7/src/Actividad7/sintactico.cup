@@ -3,7 +3,7 @@
 /* RODRIGUEZ MARTINEZ LEONARDO JAVIER  */
 
 
-package practica4;
+package Actividad7;
 
 
 import java_cup.runtime.*;
@@ -54,54 +54,44 @@ non terminal expresion, expresion_aritmetica,
             termino_logico, lista_expresiones
             ;
 
-non terminal estructura_control, sentencia_if, sentencia_else_if, sentencia_else, sentencia_condicional_if, sentencia_while, sentencia_for,
+non terminal estructura_control, sentencia_if, sentencia_while, sentencia_for,
             bloque, lista_sentencias, sentencia, inicializacion, actualizacion,
-            asignacion, bloque_estructuras, bloque_sentencias;
+            asignacion, bloque_estructuras, bloque_sentencias,
+            bloque_clases, clase, cuerpo_clase, declaracion_metodo, declaracion_variable,
+            parametros, cuerpo_metodo, parametro, dec_cuerpo_clase;
+
+precedence left LAMBDA;
+precedence left IF;
+precedence left OR;
+precedence left AND;
+precedence left NOT;
+precedence left IN,IS;
+precedence left MINUS, PLUS;
+precedence left MULTIPLY, DIVIDE,MODULE;
+precedence left DOT;
 
 
-
-start with bloque_sentencias;
-
+start with bloque_clases;
 
 lista_expresiones ::=
                  lista_expresiones expresion |
                  expresion
                  ;
-
-
-/* Reglas de la gramática */
-declaraciones ::=
-   bloque_importaciones bloque_variables |
-   bloque_importaciones |
-   bloque_variables
-   ;
-
-
-/* Bloque de importaciones */
-bloque_importaciones ::=
-   bloque_importaciones dec_importaciones |
-   dec_importaciones
-   ;
-
-
-/* Bloque de variables */
-bloque_variables ::=
-   bloque_variables declaracion |
-   declaracion
-   ;
-
-
+/* -------------------------- */
+        /* Importaciones */
+/* -------------------------- */
 /* Regla para importaciones con múltiples niveles */
 dec_importaciones ::=
    IMPORT lista_identificador_punto
    {: System.out.println("Es una declaracion de importacion"); :};
 
-
 /* Regla auxiliar para manejar múltiples identificadores separados por DOT */
 lista_identificador_punto ::=
    lista_identificador_punto DOT IDENTIFIER |
    IDENTIFIER;
-
+/* -------------------------- */
+/* Declaracion de variables */
+/* -------------------------- */
 /* Regla para declaraciones de variables */
 declaracion ::=
    IDENTIFIER EQUAL valor_asignacion
@@ -113,18 +103,104 @@ valor_asignacion ::=
    cadena
    ;
 
-
 numero ::=
    INTEGER | FLOAT
    ;
-
 
 cadena ::=
    STRING |
    STRING_SIMPLE
    ;
+/* -------------------------- */
+        /* Estructuras de control */
+/* -------------------------- */
+estructura_control ::=
+    sentencia_if |
+    sentencia_while |
+    sentencia_for
+    ;
 
-/* Definición de expresiones aritméticas y lógicas */
+/* Sentencia if con manejo de errores */
+sentencia_if ::=
+    IF expresion COLON bloque ELSE COLON bloque
+    {: System.out.println("=============SENTENCIA IF-ELSE valida============="); :} |
+    IF expresion COLON bloque ELSE error
+    ;
+
+/* Sentencia while con manejo de errores */
+sentencia_while ::=
+    WHILE expresion COLON bloque
+    {: System.out.println("=============SENTENCIA WHILE valida============="); :} |
+    WHILE expresion COLON error
+    {: System.out.println("ERROR: Se esperaba un bloque después de WHILE"); :}
+    ;
+
+/* Sentencia for con manejo de errores */
+sentencia_for ::=
+    FOR IDENTIFIER IN RANGE LPAREN numero RPAREN COLON bloque
+    {: System.out.println("=============SENTENCIA FOR valida============="); :}
+    ;
+
+/* Bloque con manejo de errores */
+bloque ::=
+    sentencia
+    {: System.out.println("Bloque con una sentencia"); :}
+    ;
+
+/* Sentencia con manejo de errores */
+sentencia ::=
+    expresion
+    {: System.out.println("Sentencia de expresion"); :} |
+    estructura_control
+    {: System.out.println("Sentencia de control"); :} |
+    declaracion
+    {: System.out.println("Sentencia de declaracion"); :}
+    ;
+/* -------------------------- */
+        /* Clases y metodos */
+/* -------------------------- */
+bloque_clases::= clase |
+                 bloque_clases clase
+                 ;
+
+clase::= CLASS IDENTIFIER COLON cuerpo_clase
+         {: System.out.println("=============DEFINICION DE CLASE============="); :}
+         |
+         CLASS error
+         {: System.out.println("=============ERROR: Clase se esperaba un identificador============="); :}
+         ;
+
+cuerpo_clase::= dec_cuerpo_clase |
+                cuerpo_clase dec_cuerpo_clase
+               ;
+
+dec_cuerpo_clase::= declaracion |
+                    declaracion_metodo
+                    ;
+
+declaracion_metodo::=
+                 DEF IDENTIFIER LPAREN parametros RPAREN COLON bloque
+                 {: System.out.println("=============DEFINICION DE METODO============="); :} |
+                 DEF IDENTIFIER LPAREN RPAREN COLON bloque
+                 {: System.out.println("=============DEFINICION DE METODO SIN PARAMETROS============="); :}|
+                 DEF IDENTIFIER LPAREN RPAREN COLON PASS
+                 {: System.out.println("=============DEFINICION DE METODO SIN PARAMETROS VACIO============="); :}|
+                 DEF IDENTIFIER LPAREN parametros RPAREN COLON PASS
+                 {: System.out.println("=============DEFINICION DE METODO VACIO============="); :} |
+                 DEF IDENTIFIER LPAREN error RPAREN
+                 {: System.out.println("=============ERROR: DEFINICION DE METODO, Se esperaban parametros============="); :}
+                 ;
+
+parametros::= parametro |
+              parametros COMMA parametro |
+              parametros error
+              ;
+
+parametro::= IDENTIFIER
+             ;
+/* -------------------------- */
+        /* EXPRESIONES */
+/* -------------------------- */
 expresion ::=
    expresion_aritmetica {: System.out.println("Es una expresion aritmetica"); :} |
    expresion_logica {: System.out.println("Es una expresion logica"); :}
@@ -180,63 +256,3 @@ termino_logico ::=
    expresion_aritmetica GREATER_EQUAL error {: System.out.println("TERMINO LOGICO->Comparacion de mayor o igual, ERROR: Se esperaba una expresion aritmetica"); :} |
    expresion_aritmetica LESS_EQUAL error {: System.out.println("TERMINO LOGICO->Comparacion de menor o igual, ERROR: Se esperaba una expresion aritmetica"); :}
    ;
-
-/* Bloque de estructuras */
-bloque_sentencias ::=
-   bloque_sentencias estructura_control |
-   estructura_control
-   ;
-
-estructura_control ::=
-    sentencia_condicional_if |
-    sentencia_while |
-    sentencia_for
-    ;
-
-sentencia_if ::=
-      IF error COLON bloque
-      {: System.err.println("Sentencia if mal formada"); :}
-    | IF expresion_logica COLON bloque
-      {: System.out.println("Sentencia if"); :}
-    ;
-
-sentencia_else_if ::=
-    ELIF expresion_logica COLON bloque
-      {: System.out.println("Sentencia else if"); :}
-    | sentencia_else_if ELIF expresion_logica COLON bloque
-      {: System.out.println("Sentencia else if adicional"); :}
-    ;
-
-sentencia_else ::=
-    ELSE COLON bloque
-      {: System.out.println("Sentencia else"); :}
-    ;
-
-sentencia_condicional_if ::=
-    sentencia_if |
-    sentencia_if sentencia_else
-    ;
-
-/* Sentencia for con manejo de errores */
-sentencia_for ::=
-    FOR IDENTIFIER IN RANGE LPAREN numero RPAREN COLON bloque
-    {: System.out.println("=============SENTENCIA FOR valida============="); :}
-    ;
-
-/* Bloque con manejo de errores */
-bloque ::=
-    sentencia
-    {: System.out.println("Bloque con una sentencia"); :} |
-    lista_sentencias sentencia
-    {: System.out.println("Bloque con múltiples sentencias"); :}
-    ;
-
-/* Sentencia con manejo de errores */
-sentencia ::=
-    expresion
-    {: System.out.println("Sentencia de expresion"); :} |
-    estructura_control
-    {: System.out.println("Sentencia de control"); :} |
-    declaracion
-    {: System.out.println("Sentencia de declaracion"); :}
-    ;
