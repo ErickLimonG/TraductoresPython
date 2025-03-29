@@ -1,0 +1,15 @@
+class casa:
+    def pepe():
+            pass
+    pepe = 2
+    jose, mario = 1 , "sex"
+    def pepe():
+        jose = 1
+        for i in range(2):
+            jose = 1
+            if x:
+                jose=2
+                if y:
+                    mario=3
+        while True:
+            pepe = 5
