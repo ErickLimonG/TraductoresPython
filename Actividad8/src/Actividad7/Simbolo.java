@@ -2,27 +2,21 @@
  * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
  * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
  */
-package demo_cup;
+package Actividad7;
 
 import java.util.Objects;
 
-/**
- *
- * @author CUT-Profesor
- */
 public class Simbolo {
     private String nombre;
     private String tipo;
     private String valor;
     private String ambito;
-    private boolean constante;
 
-    public Simbolo(String nombre, String tipo, String valor, String ambito, boolean constante) {
+    public Simbolo(String nombre, String tipo, String valor, String ambito) {
         this.nombre = nombre;
         this.tipo = tipo;
         this.valor = valor;
         this.ambito = ambito;
-        this.constante = constante;
     }
 
     public String getNombre() {
@@ -57,14 +51,6 @@ public class Simbolo {
         this.ambito = ambito;
     }
 
-    public boolean isConstante() {
-        return constante;
-    }
-
-    public void setConstante(boolean constante) {
-        this.constante = constante;
-    }
-
     @Override
     public int hashCode() {
         int hash = 7;
@@ -89,7 +75,7 @@ public class Simbolo {
 
     @Override
     public String toString() {
-        return "\nSimbolo{" + "nombre=" + nombre + ", tipo=" + tipo + ", valor=" + valor + ", ambito=" + ambito + ", constante=" + constante + '}';
+        return "\nSimbolo{" + "nombre=" + nombre + ", tipo=" + tipo + ", valor=" + valor + ", ambito=" + ambito + '}';
     }
     
     
