@@ -1,8 +1,15 @@
-var = 1
-pepe = 'nombre'
-jose = "Chipotle"
-pi = 3.1416
-caracter = "c"
-caracter2 = 'c'
-verdadero = True
-falso = False
+import algo
+
+class clase:
+    var = 1
+    pepe = 'nombre'
+    jose = "Chipotle"
+    pi = 3.1416
+    def pedro():
+        if jose:
+            caracter = "c"
+            caracter2 = 'c'
+            verdadero = True
+            falso = False
+    for i in range(5):
+        i = 0

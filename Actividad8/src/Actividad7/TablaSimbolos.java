@@ -2,16 +2,11 @@
  * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
  * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
  */
-package demo_cup;
+package Actividad7;
 
 import java.util.HashMap;
 import java.util.Map;
 
-
-/**
- *
- * @author CUT-Profesor
- */
 public class TablaSimbolos {//nombres de variables, constantes, metodos, clases
     private Map<String,Simbolo> tabla;
     

@@ -65,19 +65,31 @@ non terminal estructura_control, sentencia_if, sentencia_while, sentencia_for,
             bloque_clases, clase, cuerpo_clase, dec_metodo, declaracion_variable,
             parametros, cuerpo_metodo, parametro, dec_cuerpo_clase;
 
-start with dec_variables;
+non terminal programa;
 
+start with programa;
+/* -------------------------- */
+/*           Programa         */
+/* -------------------------- */
 lista_expresiones ::=
                  lista_expresiones expresion |
                  expresion
                  ;
+programa ::=
+        dec_importaciones bloque_clases
+        ;
 /* -------------------------- */
         /* Importaciones */
 /* -------------------------- */
 /* Regla para importaciones con múltiples niveles */
 dec_importaciones ::=
    IMPORT lista_identificador_punto
-   {: System.out.println("Es una declaracion de importacion"); :};
+   {: System.out.println("Es una declaracion de importacion"); :} |
+   FROM IDENTIFIER IMPORT lista_identificador_punto
+   {: System.out.println("Es una declaracion de importacion FROM"); :} |
+   /* O nadota para importaciones ---WARNING--- a lo mejor da problemas */
+   {: System.out.println("!!!!!!!!!!!!!!!DECLARACION DE IMPORTACION VACIA!!!!!!!!!!!!!!!"); :}
+   ;
 
 /* Regla auxiliar para manejar múltiples identificadores separados por DOT */
 lista_identificador_punto ::=
@@ -88,8 +100,7 @@ lista_identificador_punto ::=
 /* -------------------------- */
 /* Regla principal para declaraciones de variables */
 dec_variables ::=
-         dec_var_individual |
-         dec_variables dec_var_individual
+         dec_var_individual
     ;
 
 /* Declaración individual de variable */

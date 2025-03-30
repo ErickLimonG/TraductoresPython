@@ -787,6 +787,7 @@ public class LexicoPython implements java_cup.runtime.Scanner {
         System.out.println("DEDENT (EOF)");
         return symbol(sym.DEDENT, "");
     }
+    return symbol(sym.EOF, "");
               }
       }
       else {
