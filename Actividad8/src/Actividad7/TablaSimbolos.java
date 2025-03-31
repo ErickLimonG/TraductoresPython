@@ -8,8 +8,12 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class TablaSimbolos {//nombres de variables, constantes, metodos, clases
+    final String RESET = "\033[0m";
+    final String ROJO = "\033[31m";
+    final String VERDE = "\033[32m";
+    final String AMARILLO = "\033[33m";
     private Map<String,Simbolo> tabla;
-    
+
     public TablaSimbolos(){
         tabla=new HashMap<>();
     }    
@@ -30,13 +34,17 @@ public class TablaSimbolos {//nombres de variables, constantes, metodos, clases
     public Simbolo obtenerSimbolo(String nombre){
         return tabla.get(nombre);
     }
-    
+
     public String mostrar(){
         String simbolos="";
         for (Simbolo value : tabla.values()) {
-            simbolos+=value;
+            simbolos+=AMARILLO+value+RESET;
         }
         return simbolos;
+    }
+
+    public Simbolo buscar(String nombre) {
+        return tabla.get(nombre);
     }
     
 }

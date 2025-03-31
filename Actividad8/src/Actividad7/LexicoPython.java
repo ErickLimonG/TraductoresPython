@@ -802,7 +802,7 @@ public class LexicoPython implements java_cup.runtime.Scanner {
             }
           case 67: break;
           case 3: 
-            { System.out.println("Non-leading spaces/tabs: '" + yytext() + "'");
+            { //System.out.println("Non-leading spaces/tabs: '" + yytext() + "'");
             }
           case 68: break;
           case 4: 

@@ -12,6 +12,37 @@ parser code{:
     public void syntax_error(Symbol s){
        System.out.println("Error sintactico en ["+s.left+":"+(s.right-1)+"], token inesperado "+s.value);
     }
+    public void agregarVariable(String id, String tipo, String valor, String contexto) {
+        final String RESET = "\033[0m";
+        final String ROJO = "\033[31m";
+        final String VERDE = "\033[32m";
+        final String AMARILLO = "\033[33m";
+
+        if (tipo.equals("variable")) {
+            Simbolo variable_simbolo = tabla.obtenerSimbolo(valor);
+            if (variable_simbolo != null) {
+                tipo = variable_simbolo.getTipo();
+                valor = variable_simbolo.getValor();
+                Simbolo simbolo = new Simbolo(id, tipo, valor, contexto);
+                if (tabla.agregar(id, simbolo)) {
+                    System.out.println(VERDE + "--------Variable agregada con referencia--------> " + id + RESET);
+                    System.out.println(tabla.mostrar());
+                    return;
+                }
+            } else {
+                System.out.println(ROJO + "-------Variable NO agregada, no se encuentra la variable referenciada-------> " + id + RESET);
+                return;
+            }
+        }
+
+        Simbolo simbolo = new Simbolo(id, tipo, valor, contexto);
+        if (tabla.agregar(id, simbolo)) {
+            System.out.println(VERDE + "--------Variable agregada--------> " + id + RESET);
+            System.out.println(tabla.mostrar());
+        } else {
+            System.out.println(ROJO + "-------Variable NO agregada-------> " + id + RESET);
+        }
+    }
 :}
 
 /* Terminales palabras reservadas */
@@ -105,66 +136,26 @@ dec_variables ::=
 
 /* Declaración individual de variable */
 dec_var_individual ::=
-        IDENTIFIER:id EQUAL INTEGER:entero
-                        {:  System.out.println("****************DECLARACION: INTEGER****************");
-                            parser.simbolo=new Simbolo(id, "int", ""+entero, "metodo");
-                            if(parser.tabla.agregar(id,parser.simbolo)){
-                                System.out.println("--------Variable agregada-------->"+id);
-                                System.out.println(parser.tabla.mostrar());
-                            }else{
-                                System.out.println("-------Variable NO agregada------->"+id);
-                            }
-                        :} |
-        IDENTIFIER:id EQUAL FLOAT:flotante
-                        {:  System.out.println("****************DECLARACION: FLOAT****************");
-                            parser.simbolo=new Simbolo(id, "float", ""+flotante, "metodo");
-                            if(parser.tabla.agregar(id,parser.simbolo)){
-                                System.out.println("--------Variable agregada-------->"+id);
-                                System.out.println(parser.tabla.mostrar());
-                            }else{
-                                System.out.println("-------Variable NO agregada------->"+id);
-                            }
-                        :} |
-        IDENTIFIER:id EQUAL STRING:cadena
-                        {:  System.out.println("****************DECLARACION: STRING****************");
-                            parser.simbolo=new Simbolo(id, "string", ""+cadena, "metodo");
-                            if(parser.tabla.agregar(id,parser.simbolo)){
-                                System.out.println("--------Variable agregada-------->"+id);
-                                System.out.println(parser.tabla.mostrar());
-                            }else{
-                                System.out.println("-------Variable NO agregada------->"+id);
-                            }
-                        :} |
-        IDENTIFIER:id EQUAL STRING_SIMPLE:cadena
-                        {:  System.out.println("****************DECLARACION: SIMPLE STRING****************");
-                            parser.simbolo=new Simbolo(id, "string", ""+cadena, "metodo");
-                            if(parser.tabla.agregar(id,parser.simbolo)){
-                                System.out.println("--------Variable agregada-------->"+id);
-                                System.out.println(parser.tabla.mostrar());
-                            }else{
-                                System.out.println("-------Variable NO agregada------->"+id);
-                            }
-                        :} |
-        IDENTIFIER:id EQUAL TRUE:bool
-                        {:  System.out.println("****************DECLARACION: BOOLEAN****************");
-                            parser.simbolo=new Simbolo(id, "boolean", ""+bool, "metodo");
-                            if(parser.tabla.agregar(id,parser.simbolo)){
-                                System.out.println("--------Variable agregada-------->"+id);
-                                System.out.println(parser.tabla.mostrar());
-                            }else{
-                                System.out.println("-------Variable NO agregada------->"+id);
-                            }
-                        :} |
-        IDENTIFIER:id EQUAL FALSE:bool
-                        {:  System.out.println("****************DECLARACION: BOOLEAN****************");
-                            parser.simbolo=new Simbolo(id, "boolean", ""+bool, "metodo");
-                            if(parser.tabla.agregar(id,parser.simbolo)){
-                                System.out.println("--------Variable agregada-------->"+id);
-                                System.out.println(parser.tabla.mostrar());
-                            }else{
-                                System.out.println("-------Variable NO agregada------->"+id);
-                            }
-                        :}
+    IDENTIFIER:id EQUAL INTEGER:entero
+    {: parser.agregarVariable(id, "int", "" + entero, "metodo"); :} |
+
+    IDENTIFIER:id EQUAL FLOAT:flotante
+    {: parser.agregarVariable(id, "float", "" + flotante, "metodo"); :} |
+
+    IDENTIFIER:id EQUAL STRING:cadena
+    {: parser.agregarVariable(id, "string", "" + cadena, "metodo"); :} |
+
+    IDENTIFIER:id EQUAL STRING_SIMPLE:cadena
+    {: parser.agregarVariable(id, "string", "" + cadena, "metodo"); :} |
+
+    IDENTIFIER:id EQUAL TRUE:bool
+    {: parser.agregarVariable(id, "boolean", "True", "metodo"); :} |
+
+    IDENTIFIER:id EQUAL FALSE:bool
+    {: parser.agregarVariable(id, "boolean", "False", "metodo"); :} |
+
+    IDENTIFIER:id EQUAL IDENTIFIER:id1
+    {: parser.agregarVariable(id, "variable", id1, "metodo"); :}
     ;
 
 /* Declaración múltiple de variables con asignación */

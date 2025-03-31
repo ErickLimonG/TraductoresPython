@@ -65,7 +65,7 @@ import java.util.Stack;
 }
 
 [ \t]+ {
-    System.out.println("Non-leading spaces/tabs: '" + yytext() + "'");
+    //System.out.println("Non-leading spaces/tabs: '" + yytext() + "'");
 }
 
 /* Palabras reservadas */

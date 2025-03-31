@@ -1,7 +1,8 @@
 import algo
 
 class clase:
-    var = 1
+    vare = 1
+    var1 = vare
     pepe = 'nombre'
     jose = "Chipotle"
     pi = 3.1416
