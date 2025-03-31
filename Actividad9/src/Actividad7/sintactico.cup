@@ -367,7 +367,7 @@ lista_identificador_punto ::=
 /* -------------------------- */
 /* Regla principal para declaraciones de variables */
 dec_variables ::=
-         dec_var_individual
+         dec_var_multiple
     ;
 
 /* Declaración individual de variable */
@@ -384,9 +384,13 @@ dec_var_individual ::= IDENTIFIER:id EQUAL valor_asignacion:valor
 
 /* Declaración múltiple de variables con asignación */
 dec_var_multiple ::=
-    lista_identificadores EQUAL lista_valores
-    {: System.out.println("Es una declaración múltiple de variables"); :}
-    ;
+    dec_var_individual |
+    dec_var_multiple COMMA IDENTIFIER:id EQUAL valor_asignacion:valor
+    {:
+        System.out.println("Asignacion detectada: " + id + " = " + valor[1]);
+        parser.agregarVariable(id, valor[0], valor[1], "metodo");
+    :}
+;
 
 /* Lista de identificadores (variables separadas por comas) */
 lista_identificadores ::=
