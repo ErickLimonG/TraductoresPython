@@ -1,0 +1,410 @@
+/* LIMON GUVERA ERICK ANTONIO  */
+/* PIEDRA FLORES AXEL JESUS  */
+/* RODRIGUEZ MARTINEZ LEONARDO JAVIER  */
+
+package Actividad7;
+
+import java_cup.runtime.*;
+
+parser code{:
+    public static TablaSimbolos tabla=new TablaSimbolos();
+    public static Simbolo simbolo;
+    public void syntax_error(Symbol s){
+       System.out.println("Error sintactico en ["+s.left+":"+(s.right-1)+"], token inesperado "+s.value);
+    }
+    public void agregarVariable(String id, String tipo, String valor, String contexto) {
+        final String RESET = "\033[0m";
+        final String ROJO = "\033[31m";
+        final String VERDE = "\033[32m";
+        final String AMARILLO = "\033[33m";
+
+        if (tipo.equals("variable")) {
+            Simbolo variable_simbolo = tabla.obtenerSimbolo(valor);
+            if (variable_simbolo != null) {
+                tipo = variable_simbolo.getTipo();
+                valor = variable_simbolo.getValor();
+                Simbolo simbolo = new Simbolo(id, tipo, valor, contexto);
+                if (tabla.agregar(id, simbolo)) {
+                    System.out.println(VERDE + "--------Variable agregada con referencia--------> "  + "nombre " + id +",tipo "+ tipo + ", valor " + valor + RESET);
+                    System.out.println(tabla.mostrar());
+                    return;
+                }
+            } else {
+                System.out.println(ROJO + "-------Variable NO agregada, no se encuentra la variable referenciada-------> " + id + RESET);
+                return;
+            }
+        }
+
+        Simbolo simbolo = new Simbolo(id, tipo, valor, contexto);
+        if (tabla.agregar(id, simbolo)) {
+            System.out.println(VERDE + "--------Variable agregada--------> " + "nombre " + id +",tipo "+ tipo + ", valor " + valor + RESET);
+            System.out.println(tabla.mostrar());
+        } else {
+            System.out.println(ROJO + "-------Variable NO agregada-------> " + id + RESET);
+        }
+    }
+:}
+
+/* Terminales palabras reservadas */
+terminal NONE, AND, OR, NOT, IS, IF, ELSE,
+        ELIF, FOR, WHILE, BREAK, CONTINUE, PASS, TRY, EXCEPT, FINALLY,
+        RAISE, ASSERT, DEF, RETURN, LAMBDA, YIELD, CLASS, IMPORT, FROM,
+        AS, DEL, GLOBAL, WITH, NONLOCAL, ASYNC, AWAIT, PACKAGE, LINE_COMMENT, IN, RANGE;
+
+terminal INDENT, DEDENT;
+
+/* Terminales operadores */
+terminal PLUS, MINUS, MULTIPLY, DIVIDE, EQUAL, DOUBLE_EQUAL, NOT_EQUAL,
+LESS_THAN, GREATER_THAN, LESS_EQUAL, GREATER_EQUAL, MODULE;
+
+
+/* Terminales símbolos */
+terminal DOT, SEMICOLON, COLON, COMMA, LBRACE, RBRACE, LBRACKET, RBRACKET,
+BACK_SLASH, PIPE, LPAREN, RPAREN;
+
+
+/* Terminales expresiones regulares
+    terminal IDENTIFIER, INTEGER, FLOAT, STRING, STRING_SIMPLE, CHAR;
+ */
+
+terminal String IDENTIFIER;
+terminal String INTEGER;
+terminal String FLOAT;
+terminal String STRING, STRING_SIMPLE;
+terminal String TRUE, FALSE;
+
+
+
+/* Terminales Error */
+terminal UNCLOSED_STRING, MALFORMED_NUMBER, MALFORMED_IDENTIFIER;
+
+
+/* No terminales */
+non terminal declaraciones, bloque_importaciones,
+            bloque_variables, dec_importaciones,
+            dec_variables, dec_var_individual, dec_var_multiple, lista_identificadores, lista_valores,
+            lista_identificador_punto
+            ;
+
+non terminal expresion,
+            expresion_logica,
+            termino_logico, lista_expresiones
+            ;
+
+non terminal estructura_control, sentencia_if, sentencia_while, sentencia_for,
+            bloque, lista_sentencias, sentencia, inicializacion, actualizacion,
+            asignacion, bloque_estructuras, bloque_sentencias,
+            bloque_clases, clase, cuerpo_clase, dec_metodo, declaracion_variable,
+            parametros, cuerpo_metodo, parametro, dec_cuerpo_clase;
+
+
+non terminal String[] valor_asignacion, expresion_aritmetica, termino, factor, cadena, booleano, numero;
+
+
+non terminal programa;
+
+start with programa;
+/* -------------------------- */
+/*           Programa         */
+/* -------------------------- */
+lista_expresiones ::=
+                 lista_expresiones expresion |
+                 expresion
+                 ;
+programa ::=
+        dec_importaciones bloque_clases
+        ;
+/* -------------------------- */
+        /* Importaciones */
+/* -------------------------- */
+/* Regla para importaciones con múltiples niveles */
+dec_importaciones ::=
+   IMPORT lista_identificador_punto
+   {: System.out.println("Es una declaracion de importacion"); :} |
+   FROM IDENTIFIER IMPORT lista_identificador_punto
+   {: System.out.println("Es una declaracion de importacion FROM"); :} |
+   /* O nadota para importaciones ---WARNING--- a lo mejor da problemas */
+   {: System.out.println("!!!!!!!!!!!!!!!DECLARACION DE IMPORTACION VACIA!!!!!!!!!!!!!!!"); :}
+;
+
+/* Regla auxiliar para manejar múltiples identificadores separados por DOT */
+lista_identificador_punto ::=
+   lista_identificador_punto DOT IDENTIFIER |
+   IDENTIFIER;
+/* -------------------------- */
+/* Declaracion de variables */
+/* -------------------------- */
+/* Regla principal para declaraciones de variables */
+dec_variables ::=
+         dec_var_individual
+    ;
+
+/* Declaración individual de variable */
+dec_var_individual ::= IDENTIFIER:id EQUAL valor_asignacion:valor
+{:
+    System.out.println("Asignación detectada: " + id + " = " + valor[1]);
+    if (!valor[0].isEmpty()) {
+        parser.agregarVariable(id, valor[0], valor[1], "metodo");
+    } else {
+        System.out.println("ERROR: Variable '" + id + "' no puede ser asignada porque el valor es indefinido.");
+    }
+:}
+;
+
+/* Declaración múltiple de variables con asignación */
+dec_var_multiple ::=
+    lista_identificadores EQUAL lista_valores
+    {: System.out.println("Es una declaración múltiple de variables"); :}
+    ;
+
+/* Lista de identificadores (variables separadas por comas) */
+lista_identificadores ::=
+    IDENTIFIER COMMA IDENTIFIER |
+    IDENTIFIER COMMA lista_identificadores
+    ;
+
+/* Lista de valores (múltiples valores separados por comas) */
+lista_valores ::=
+    valor_asignacion COMMA valor_asignacion |
+    valor_asignacion COMMA lista_valores
+    ;
+/* valores de asignaciones, EXPRESION ARTIMETICA CUBRE NUMERO E IDENTIFICADOR*/
+valor_asignacion ::=
+    expresion_aritmetica:e {: RESULT = e; :} |
+    cadena:c {: RESULT = c; :} |
+    booleano:b {: RESULT = b; :}
+    ;
+
+numero ::=
+   INTEGER : str
+   {:
+        System.out.println("Tipo: entero");
+        RESULT = new String[]{"int",str.toString()};
+   :} |
+   FLOAT : str
+   {:
+        System.out.println("Tipo: float");
+        RESULT = new String[]{"float",str.toString()};
+   :}
+   ;
+
+cadena ::=
+   STRING : str
+      {:
+           System.out.println("Tipo: cadena");
+           RESULT = new String[]{"string",str.toString()};
+      :} |
+   STRING_SIMPLE : str
+      {:
+           System.out.println("Tipo: cadena simple");
+           RESULT = new String[]{"string",str.toString()};
+      :}
+   ;
+
+booleano ::=
+       TRUE : str
+             {:
+                System.out.println("Tipo: Booleano True");
+                RESULT = new String[]{"boolean",str.toString()};
+             :} |
+       FALSE : str
+            {:
+                System.out.println("Tipo: Booleano False");
+                RESULT = new String[]{"boolean",str.toString()};
+            :}
+;
+/* -------------------------- */
+/*  Estructuras de control    */
+/* -------------------------- */
+estructura_control ::=
+    sentencia_if |
+    sentencia_while |
+    sentencia_for
+    ;
+
+/* Sentencia if con manejo de errores */
+sentencia_if ::=
+    IF expresion COLON INDENT bloque DEDENT ELSE COLON INDENT bloque DEDENT
+    {: System.out.println("=============SENTENCIA IF-ELSE valida============="); :} |
+    IF expresion COLON INDENT bloque DEDENT
+    {: System.out.println("=============SENTENCIA IF valida============="); :}
+    ;
+
+/* Sentencia while con manejo de errores */
+sentencia_while ::=
+    WHILE expresion COLON INDENT bloque DEDENT
+    {: System.out.println("=============SENTENCIA WHILE valida============="); :} |
+    WHILE expresion COLON error
+    {: System.out.println("ERROR: Se esperaba un INDENT despues de WHILE"); :}
+    ;
+
+/* Sentencia for con manejo de errores */
+sentencia_for ::=
+    FOR IDENTIFIER IN RANGE LPAREN numero RPAREN COLON INDENT bloque DEDENT
+    {: System.out.println("=============SENTENCIA FOR valida============="); :} |
+    FOR IDENTIFIER IN RANGE LPAREN numero RPAREN COLON error
+    {: System.out.println("ERROR: Se esperaba un INDENT despues de FOR"); :}
+    ;
+
+/* Bloque con manejo de errores */
+bloque ::=
+    lista_sentencias
+    {: System.out.println("Bloque con sentencias"); :}
+    ;
+
+lista_sentencias ::=
+    sentencia |
+    lista_sentencias sentencia
+    ;
+/* Sentencia con manejo de errores */
+sentencia ::=
+    expresion
+    {: System.out.println("Sentencia de expresion"); :} |
+    estructura_control
+    {: System.out.println("Sentencia de control"); :} |
+    dec_variables
+    {: System.out.println("Sentencia de declaracion"); :}
+    ;
+
+/* -------------------------- */
+     /* Clases y metodos */
+/* -------------------------- */
+bloque_clases::= clase |
+                 bloque_clases clase
+                 ;
+
+clase::= CLASS IDENTIFIER COLON INDENT cuerpo_clase DEDENT
+         {: System.out.println("=============DEFINICION DE CLASE============="); :} |
+         CLASS error COLON
+         {: System.out.println("=============ERROR: Clase se esperaba un identificador============="); :} |
+         CLASS IDENTIFIER COLON error
+         {: System.out.println("=============ERROR: Se esperaba un INDENT despues de CLASS============="); :}
+         ;
+
+cuerpo_clase::= dec_cuerpo_clase |
+                cuerpo_clase dec_cuerpo_clase
+               ;
+
+dec_cuerpo_clase::= dec_variables |
+                    dec_metodo
+                    ;
+
+dec_metodo ::=
+    DEF IDENTIFIER LPAREN parametros RPAREN COLON INDENT bloque DEDENT
+    {: System.out.println("=============DEFINICION DE METODO============="); :} 
+    |
+    DEF IDENTIFIER LPAREN RPAREN COLON INDENT bloque DEDENT
+    {: System.out.println("=============DEFINICION DE METODO SIN PARAMETROS============="); :}
+    |
+    DEF IDENTIFIER LPAREN RPAREN COLON INDENT PASS DEDENT
+    {: System.out.println("=============DEFINICION DE METODO SIN PARAMETROS VACIO============="); :}
+    |
+    DEF IDENTIFIER LPAREN parametros RPAREN COLON INDENT PASS DEDENT
+    {: System.out.println("=============DEFINICION DE METODO VACIO============="); :}
+    |
+    DEF IDENTIFIER LPAREN error RPAREN
+    {: System.out.println("=============ERROR: DEFINICION DE METODO, Se esperaban parametros============="); :}
+    ;
+
+parametros::= parametro |
+              parametros COMMA parametro |
+              parametros error
+              ;
+
+parametro::= IDENTIFIER
+             ;
+/* -------------------------- */
+        /* EXPRESIONES */
+/* -------------------------- */
+expresion ::=
+   expresion_aritmetica {: System.out.println("Es una expresion aritmetica"); :} |
+   expresion_logica {: System.out.println("Es una expresion logica"); :}
+   ;
+
+
+expresion_aritmetica ::=
+   termino:t {: RESULT = t; :} |
+   expresion_aritmetica:e PLUS termino:t
+   {:
+      if (e != null && t != null && e.length >= 2 && t.length >= 2) {
+      // Si el tipo es el mismo en ambos
+         if (e[0].equals(t[0])) {
+            if (e[0].equals("int")) {
+               String suma_int = String.valueOf(Integer.parseInt(e[1]) + Integer.parseInt(t[1]));
+               RESULT = new String[]{"int", suma_int};
+               System.out.println("val1"+e[1]+","+"val2"+"="+suma_int);
+            } else if (e[0].equals("float")) {
+               RESULT = new String[]{"float", String.valueOf(Float.parseFloat(e[1]) + Float.parseFloat(t[1]))};
+            }
+         } else {
+            System.out.println("\033[31m"+"Error: Type mismatch in arithmetic operation"+"\033[0m");
+            RESULT = new String[]{"", ""};
+         }
+      } else {
+         RESULT = new String[]{"", ""};
+      }
+      System.out.println("Operacion de suma");
+   :} |
+   expresion_aritmetica:e MINUS termino:t
+   {:
+      // Similar a PLUS pero con resta
+      RESULT = new String[]{"", ""}; // Implementa lógica similar
+   :}
+   ;
+
+termino ::=
+   factor:f {: RESULT = f; :} |
+   termino:t MULTIPLY factor:f
+   {:
+      // Implementa lógica de multiplicación similar a PLUS
+      RESULT = new String[]{"", ""};
+   :} |
+   termino:t DIVIDE factor:f
+   {:
+      // Implementa lógica de división similar a PLUS
+      RESULT = new String[]{"", ""};
+   :}
+   ;
+
+factor ::=
+   IDENTIFIER:id
+   {:
+       System.out.println("Valor identifier: "+ id);
+       if(parser.tabla.verificar(id)){
+           RESULT = new String[]{
+               parser.tabla.obtenerSimbolo(id).getTipo(),
+               parser.tabla.obtenerSimbolo(id).getValor()
+           };
+       }else{
+           System.out.println("Error: Variable '"+id+"' no definida");
+           RESULT = new String[]{"", ""};
+       }
+   :} |
+   numero:n {: RESULT = n; :} |
+   LPAREN expresion_aritmetica:e RPAREN {: RESULT = e; :}
+   ;
+
+
+expresion_logica ::=
+   termino_logico                       {: System.out.println("Es un termino logico "); :} |
+   expresion_logica AND termino_logico  {: System.out.println("Expresion logica(AND)"); :} |
+   expresion_logica OR termino_logico   {: System.out.println("Expresion logica(OR)"); :} |
+   expresion_logica AND error  {: System.out.println("Expresion logica(AND), ERROR: SE ESPERABA UN TERMINO LOGICO"); :} |
+   expresion_logica OR  error   {: System.out.println("Expresion logica(OR), ERROR: SE ESPERABA UN TERMINO LOGICO"); :}
+   ;
+
+
+termino_logico ::=
+   expresion_aritmetica DOUBLE_EQUAL expresion_aritmetica {: System.out.println("Comparacion de igualdad"); :} |
+   expresion_aritmetica NOT_EQUAL expresion_aritmetica {: System.out.println("Comparacion de desigualdad"); :} |
+   expresion_aritmetica GREATER_THAN expresion_aritmetica {: System.out.println("Comparacion de mayor que"); :} |
+   expresion_aritmetica LESS_THAN expresion_aritmetica {: System.out.println("Comparacion de menor que"); :} |
+   expresion_aritmetica GREATER_EQUAL expresion_aritmetica {: System.out.println("Comparacion de mayor o igual"); :} |
+   expresion_aritmetica LESS_EQUAL expresion_aritmetica {: System.out.println("Comparacion de menor o igual"); :} |
+   expresion_aritmetica DOUBLE_EQUAL error {: System.out.println("TERMINO LOGICO->Comparacion de igualdad, ERROR: Se esperaba una expresion aritmetica"); :} |
+   expresion_aritmetica NOT_EQUAL error {: System.out.println("TERMINO LOGICO->Comparacion de desigualdad, ERROR: Se esperaba una expresion aritmetica"); :} |
+   expresion_aritmetica GREATER_THAN error {: System.out.println("TERMINO LOGICO->Comparacion de mayor que, ERROR: Se esperaba una expresion aritmetica"); :} |
+   expresion_aritmetica LESS_THAN error {: System.out.println("TERMINO LOGICO->Comparacion de menor que, ERROR: Se esperaba una expresion aritmetica"); :} |
+   expresion_aritmetica GREATER_EQUAL error {: System.out.println("TERMINO LOGICO->Comparacion de mayor o igual, ERROR: Se esperaba una expresion aritmetica"); :} |
+   expresion_aritmetica LESS_EQUAL error {: System.out.println("TERMINO LOGICO->Comparacion de menor o igual, ERROR: Se esperaba una expresion aritmetica"); :}
+   ;

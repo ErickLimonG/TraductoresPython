@@ -1,0 +1,6 @@
+import algo
+
+class clase:
+    var1 = "str"
+    var2 = 2
+    var = var2 + var1
