@@ -25,7 +25,7 @@ parser code{:
                 valor = variable_simbolo.getValor();
                 Simbolo simbolo = new Simbolo(id, tipo, valor, contexto);
                 if (tabla.agregar(id, simbolo)) {
-                    System.out.println(VERDE + "--------Variable agregada con referencia--------> " + id + RESET);
+                    System.out.println(VERDE + "--------Variable agregada con referencia--------> "  + "nombre " + id +",tipo "+ tipo + ", valor " + valor + RESET);
                     System.out.println(tabla.mostrar());
                     return;
                 }
@@ -37,7 +37,7 @@ parser code{:
 
         Simbolo simbolo = new Simbolo(id, tipo, valor, contexto);
         if (tabla.agregar(id, simbolo)) {
-            System.out.println(VERDE + "--------Variable agregada--------> " + id + RESET);
+            System.out.println(VERDE + "--------Variable agregada--------> " + "nombre " + id +",tipo "+ tipo + ", valor " + valor + RESET);
             System.out.println(tabla.mostrar());
         } else {
             System.out.println(ROJO + "-------Variable NO agregada-------> " + id + RESET);
