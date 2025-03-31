@@ -3,4 +3,9 @@ import algo
 class clase:
     var1 = "str"
     var2 = 2
-    var = var2 + var1
+    var = var2 + 1.1
+    var4 = var2 * 1.1
+    var5 =  1.1 * var2 * 1000
+    var6 = int(var5)
+    sum = str(1+2)
+    div = str(int(9 / 5))

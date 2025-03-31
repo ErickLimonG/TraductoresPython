@@ -97,6 +97,12 @@ import java.util.Stack;
 "in" { return symbol(sym.IN, yytext()); }
 "as" { return symbol(sym.AS, yytext()); }
 
+/* Casting */
+"int" { return symbol(sym.CAST_INT, yytext()); }
+"float" { return symbol(sym.CAST_FLOAT, yytext()); }
+"bool" { return symbol(sym.CAST_BOOL, yytext()); }
+"str" { return symbol(sym.CAST_STR, yytext()); }
+
 /* Comentario */
 "#".* { /*System.out.println("LINE_COMMENT=" + yytext());*/ }
 

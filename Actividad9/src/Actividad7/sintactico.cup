@@ -43,6 +43,63 @@ parser code{:
             System.out.println(ROJO + "-------Variable NO agregada-------> " + id + RESET);
         }
     }
+    public String[] realizarCasting(String tipoCast, String[] valor) {
+        if (valor == null || valor.length < 2) {
+            return new String[]{"", ""};
+        }
+
+        String tipoOriginal = valor[0];
+        String val = valor[1];
+
+        try {
+            switch (tipoCast) {
+                case "int":
+                    if (tipoOriginal.equals("int")) {
+                        return valor; // No need to cast
+                    } else if (tipoOriginal.equals("float")) {
+                        return new String[]{"int", String.valueOf((int)Float.parseFloat(val))};
+                    } else if (tipoOriginal.equals("string")) {
+                        // Try to parse string as number
+                        return new String[]{"int", String.valueOf(Integer.parseInt(val.trim()))};
+                    } else if (tipoOriginal.equals("boolean")) {
+                        return new String[]{"int", val.equals("true") ? "1" : "0"};
+                    }
+                    break;
+
+                case "float":
+                    if (tipoOriginal.equals("float")) {
+                        return valor;
+                    } else if (tipoOriginal.equals("int")) {
+                        return new String[]{"float", String.valueOf(Float.parseFloat(val))};
+                    } else if (tipoOriginal.equals("string")) {
+                        return new String[]{"float", String.valueOf(Float.parseFloat(val.trim()))};
+                    } else if (tipoOriginal.equals("boolean")) {
+                        return new String[]{"float", val.equals("true") ? "1.0" : "0.0"};
+                    }
+                    break;
+
+                case "str":
+                    return new String[]{"string", val.toString()};
+
+                case "bool":
+                    if (tipoOriginal.equals("boolean")) {
+                        return valor;
+                    } else if (tipoOriginal.equals("int") || tipoOriginal.equals("float")) {
+                        boolean isNonZero = tipoOriginal.equals("int") ?
+                            Integer.parseInt(val) != 0 : Float.parseFloat(val) != 0.0f;
+                        return new String[]{"boolean", String.valueOf(isNonZero)};
+                    } else if (tipoOriginal.equals("string")) {
+                        return new String[]{"boolean", String.valueOf(!val.isEmpty())};
+                    }
+                    break;
+            }
+        } catch (NumberFormatException e) {
+            System.err.println("Error de casting: no se puede convertir " + val + " a " + tipoCast);
+        }
+
+        return new String[]{"", ""};
+    }
+
 :}
 
 /* Terminales palabras reservadas */
@@ -73,6 +130,7 @@ terminal String FLOAT;
 terminal String STRING, STRING_SIMPLE;
 terminal String TRUE, FALSE;
 
+terminal CAST_INT, CAST_FLOAT, CAST_STR, CAST_BOOL;
 
 
 /* Terminales Error */
@@ -86,19 +144,21 @@ non terminal declaraciones, bloque_importaciones,
             lista_identificador_punto
             ;
 
-non terminal expresion,
+non terminal
             expresion_logica,
             termino_logico, lista_expresiones
             ;
 
 non terminal estructura_control, sentencia_if, sentencia_while, sentencia_for,
-            bloque, lista_sentencias, sentencia, inicializacion, actualizacion,
+            bloque, lista_sentencias, sentencia, inicializacion, actualizfacion,
             asignacion, bloque_estructuras, bloque_sentencias,
             bloque_clases, clase, cuerpo_clase, dec_metodo, declaracion_variable,
             parametros, cuerpo_metodo, parametro, dec_cuerpo_clase;
 
+non terminal casting_funcion;
 
-non terminal String[] valor_asignacion, expresion_aritmetica, termino, factor, cadena, booleano, numero;
+non terminal String[] valor_asignacion, expresion,expresion_aritmetica, termino, factor, cadena, booleano, numero, llamada_funcion;
+
 
 
 non terminal programa;
@@ -107,10 +167,12 @@ start with programa;
 /* -------------------------- */
 /*           Programa         */
 /* -------------------------- */
+/*
 lista_expresiones ::=
                  lista_expresiones expresion |
                  expresion
                  ;
+*/
 programa ::=
         dec_importaciones bloque_clases
         ;
@@ -172,7 +234,8 @@ lista_valores ::=
 valor_asignacion ::=
     expresion_aritmetica:e {: RESULT = e; :} |
     cadena:c {: RESULT = c; :} |
-    booleano:b {: RESULT = b; :}
+    booleano:b {: RESULT = b; :} |
+    llamada_funcion:f {: RESULT = f;:}
     ;
 
 numero ::=
@@ -317,17 +380,41 @@ parametro::= IDENTIFIER
         /* EXPRESIONES */
 /* -------------------------- */
 expresion ::=
-   expresion_aritmetica {: System.out.println("Es una expresion aritmetica"); :} |
-   expresion_logica {: System.out.println("Es una expresion logica"); :}
+   expresion_aritmetica:ea {: RESULT = ea; System.out.println("Es una expresion aritmetica"); :} |
+   expresion_logica {: System.out.println("Es una expresion logica"); :} |
+   llamada_funcion:f {:RESULT = f; System.out.println("Es una expresion que llama una FUNCION"); :}
    ;
 
+llamada_funcion ::=
+   //IDENTIFIER LPAREN lista_expresiones RPAREN |
+   casting_funcion:castType LPAREN expresion:exp RPAREN
+   {:
+       if (exp != null) {
+           String[] resultado = parser.realizarCasting((String)castType, (String[])exp);
+           if (resultado[0].isEmpty()) {
+               System.out.println("\033[31m"+"Error: No se pudo realizar el casting de " + exp[1] + " a " + castType + "\033[0m");
+           } else {
+               System.out.println("Casting realizado: " + exp[1] + " -> " + resultado[1] + " (" + resultado[0] + ")");
+           }
+           RESULT = resultado;
+       } else {
+           RESULT = new String[]{"", ""};
+       }
+   :}
+;
+casting_funcion ::=
+   CAST_INT {: RESULT = "int"; :} |
+   CAST_FLOAT {: RESULT = "float"; :} |
+   CAST_STR {: RESULT = "str"; :} |
+   CAST_BOOL {: RESULT = "bool"; :}
+;
 
 expresion_aritmetica ::=
    termino:t {: RESULT = t; :} |
    expresion_aritmetica:e PLUS termino:t
    {:
       if (e != null && t != null && e.length >= 2 && t.length >= 2) {
-      // Si el tipo es el mismo en ambos
+         // Si el tipo es el mismo en ambos
          if (e[0].equals(t[0])) {
             if (e[0].equals("int")) {
                String suma_int = String.valueOf(Integer.parseInt(e[1]) + Integer.parseInt(t[1]));
@@ -337,8 +424,13 @@ expresion_aritmetica ::=
                RESULT = new String[]{"float", String.valueOf(Float.parseFloat(e[1]) + Float.parseFloat(t[1]))};
             }
          } else {
-            System.out.println("\033[31m"+"Error: Type mismatch in arithmetic operation"+"\033[0m");
-            RESULT = new String[]{"", ""};
+            // Si los tipos son numeros pero diferentes se toma float para no perder precision
+            if ((e[0].equals("int") || e[0].equals("float")) && (t[0].equals("int") || t[0].equals("float"))) {
+                RESULT = new String[]{"float", String.valueOf(Float.parseFloat(e[1]) + Float.parseFloat(t[1]))};
+            } else {
+                System.out.println("\033[31m" + "Error: Type mismatch in arithmetic operation" + "\033[0m");
+                RESULT = new String[]{"", ""};
+            }
          }
       } else {
          RESULT = new String[]{"", ""};
@@ -347,22 +439,85 @@ expresion_aritmetica ::=
    :} |
    expresion_aritmetica:e MINUS termino:t
    {:
-      // Similar a PLUS pero con resta
-      RESULT = new String[]{"", ""}; // Implementa lógica similar
+      if (e != null && t != null && e.length >= 2 && t.length >= 2) {
+         // Si el tipo es el mismo en ambos
+         if (e[0].equals(t[0])) {
+            if (e[0].equals("int")) {
+               String suma_int = String.valueOf(Integer.parseInt(e[1]) - Integer.parseInt(t[1]));
+               RESULT = new String[]{"int", suma_int};
+               System.out.println("val1"+e[1]+","+"val2"+"="+suma_int);
+            } else if (e[0].equals("float")) {
+               RESULT = new String[]{"float", String.valueOf(Float.parseFloat(e[1]) - Float.parseFloat(t[1]))};
+            }
+         } else {
+            // Si los tipos son numeros pero diferentes se toma float para no perder precision
+            if ((e[0].equals("int") || e[0].equals("float")) && (t[0].equals("int") || t[0].equals("float"))) {
+                RESULT = new String[]{"float", String.valueOf(Float.parseFloat(e[1]) - Float.parseFloat(t[1]))};
+            } else {
+                System.out.println("\033[31m" + "Error: Type mismatch in arithmetic operation" + "\033[0m");
+                RESULT = new String[]{"", ""};
+            }
+         }
+      } else {
+         RESULT = new String[]{"", ""};
+      }
+      System.out.println("Operacion de suma");
    :}
    ;
 
 termino ::=
    factor:f {: RESULT = f; :} |
-   termino:t MULTIPLY factor:f
+   termino:e MULTIPLY factor:t
    {:
-      // Implementa lógica de multiplicación similar a PLUS
-      RESULT = new String[]{"", ""};
+      if (e != null && t != null && e.length >= 2 && t.length >= 2) {
+         // Si el tipo es el mismo en ambos
+         if (e[0].equals(t[0])) {
+            if (e[0].equals("int")) {
+               String suma_int = String.valueOf(Integer.parseInt(e[1]) * Integer.parseInt(t[1]));
+               RESULT = new String[]{"int", suma_int};
+               System.out.println("val1"+e[1]+","+"val2"+"="+suma_int);
+            } else if (e[0].equals("float")) {
+               RESULT = new String[]{"float", String.valueOf(Float.parseFloat(e[1]) * Float.parseFloat(t[1]))};
+            }
+         } else {
+            // Si los tipos son numeros pero diferentes se toma float para no perder precision
+            if ((e[0].equals("int") || e[0].equals("float")) && (t[0].equals("int") || t[0].equals("float"))) {
+                RESULT = new String[]{"float", String.valueOf(Float.parseFloat(e[1]) * Float.parseFloat(t[1]))};
+            } else {
+                System.out.println("\033[31m" + "Error: Type mismatch in arithmetic operation" + "\033[0m");
+                RESULT = new String[]{"", ""};
+            }
+         }
+      } else {
+         RESULT = new String[]{"", ""};
+      }
+      System.out.println("Operacion de suma");
    :} |
-   termino:t DIVIDE factor:f
+   termino:e DIVIDE factor:t
    {:
-      // Implementa lógica de división similar a PLUS
-      RESULT = new String[]{"", ""};
+      if (e != null && t != null && e.length >= 2 && t.length >= 2) {
+         // Si el tipo es el mismo en ambos
+         if (e[0].equals(t[0])) {
+            if (e[0].equals("int")) {
+               String suma_int = String.valueOf(Float.parseFloat(e[1]) / Float.parseFloat(t[1]));
+               RESULT = new String[]{"float", suma_int};
+               System.out.println("val1"+e[1]+","+"val2"+"="+suma_int);
+            } else if (e[0].equals("float")) {
+               RESULT = new String[]{"float", String.valueOf(Float.parseFloat(e[1]) / Float.parseFloat(t[1]))};
+            }
+         } else {
+            // Si los tipos son numeros pero diferentes se toma float para no perder precision
+            if ((e[0].equals("int") || e[0].equals("float")) && (t[0].equals("int") || t[0].equals("float"))) {
+                RESULT = new String[]{"float", String.valueOf(Float.parseFloat(e[1]) / Float.parseFloat(t[1]))};
+            } else {
+                System.out.println("\033[31m" + "Error: Type mismatch in arithmetic operation" + "\033[0m");
+                RESULT = new String[]{"", ""};
+            }
+         }
+      } else {
+         RESULT = new String[]{"", ""};
+      }
+      System.out.println("Operacion de suma");
    :}
    ;
 
