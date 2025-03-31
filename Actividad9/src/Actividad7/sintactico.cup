@@ -100,6 +100,176 @@ parser code{:
         return new String[]{"", ""};
     }
 
+     public String[] handleComparison(String[] e1, String[] e2, String operator) {
+            if (e1 == null || e2 == null || e1.length < 2 || e2.length < 2) {
+                return new String[]{"", ""};
+            }
+
+            switch (operator) {
+                case "==":
+                case "!=":
+                    if (e1[0].equals(e2[0])) {
+                        boolean result = operator.equals("==") ?
+                            e1[1].equals(e2[1]) : !e1[1].equals(e2[1]);
+                        System.out.println("Comparación de " + (operator.equals("==") ? "igualdad" : "desigualdad") +
+                                         " entre tipos compatibles: " + e1[0]);
+                        return new String[]{"boolean", String.valueOf(result)};
+                    }
+                    break;
+
+                case ">":
+                case "<":
+                case ">=":
+                case "<=":
+                    if ((e1[0].equals("int") || e1[0].equals("float")) &&
+                        (e2[0].equals("int") || e2[0].equals("float"))) {
+                        float val1 = Float.parseFloat(e1[1]);
+                        float val2 = Float.parseFloat(e2[1]);
+                        boolean result = false;
+
+                        switch (operator) {
+                            case ">": result = val1 > val2; break;
+                            case "<": result = val1 < val2; break;
+                            case ">=": result = val1 >= val2; break;
+                            case "<=": result = val1 <= val2; break;
+                        }
+
+                        System.out.println("Comparacion " + operator + " entre numeros");
+                        return new String[]{"boolean", String.valueOf(result)};
+                    }
+                    break;
+            }
+
+            System.out.println("\033[31mError: No se pueden comparar " + e1[0] + " con " + e2[0] +
+                             " usando " + operator + "\033[0m");
+            return new String[]{"", ""};
+        }
+
+        // Helper method for boolean variable lookup
+        public String[] handleBooleanIdentifier(String id) {
+            if (tabla.verificar(id)) {
+                String tipo = tabla.obtenerSimbolo(id).getTipo();
+                if (tipo.equals("boolean")) {
+                    return new String[]{"boolean", tabla.obtenerSimbolo(id).getValor()};
+                } else {
+                    System.out.println("\033[31mError: El identificador " + id + " no es booleano\033[0m");
+                }
+            } else {
+                System.out.println("\033[31mError: Variable " + id + " no definida\033[0m");
+            }
+            return new String[]{"", ""};
+        }
+
+        // Helper method for NOT operation
+        public String[] handleNotOperation(String[] tl) {
+            if (tl != null && tl.length >= 2 && tl[0].equals("boolean")) {
+                return new String[]{"boolean", String.valueOf(!Boolean.parseBoolean(tl[1]))};
+            }
+            System.out.println("\033[31mError: Operador NOT requiere un operando booleano\033[0m");
+            return new String[]{"", ""};
+        }
+
+         public String[] handleLogicalOperation(String[] el, String[] tl, String operator) {
+             if (el == null || tl == null || el.length < 2 || tl.length < 2) {
+                 return new String[]{"", ""};
+             }
+
+             if (!el[0].equals("boolean") || !tl[0].equals("boolean")) {
+                 System.out.println("\033[31mError: Operador " + operator + " requiere operandos booleanos\033[0m");
+                 return new String[]{"", ""};
+             }
+
+             boolean val1 = Boolean.parseBoolean(el[1]);
+             boolean val2 = Boolean.parseBoolean(tl[1]);
+             boolean result = false;
+
+             switch (operator) {
+                 case "AND":
+                     result = val1 && val2;
+                     System.out.println("Operacion logica AND entre " + val1 + " y " + val2);
+                     break;
+                 case "OR":
+                     result = val1 || val2;
+                     System.out.println("Operacion logica OR entre " + val1 + " y " + val2);
+                     break;
+             }
+
+             return new String[]{"boolean", String.valueOf(result)};
+         }
+
+         // Helper method for error handling in logical expressions
+         public void handleLogicalError(String operator) {
+             System.out.println("\033[31mExpresion logica(" + operator + "), ERROR: Se esperaba un termino logico\033[0m");
+         }
+
+    // Helper method for arithmetic operations
+    public String[] handleArithmeticOperation(String[] e, String[] t, String operator) {
+        if (e == null || t == null || e.length < 2 || t.length < 2) {
+            return new String[]{"", ""};
+        }
+
+        // Check if both operands are numbers
+        boolean eIsNumber = e[0].equals("int") || e[0].equals("float");
+        boolean tIsNumber = t[0].equals("int") || t[0].equals("float");
+
+        if (!eIsNumber || !tIsNumber) {
+            System.out.println("\033[31mError: Operador " + operator + " requiere operandos numericos\033[0m");
+            return new String[]{"", ""};
+        }
+
+        // For division, always promote to float
+        if (operator.equals("/")) {
+            float val1 = Float.parseFloat(e[1]);
+            float val2 = Float.parseFloat(t[1]);
+            if (val2 == 0) {
+                System.out.println("\033[31mError: Division por cero\033[0m");
+                return new String[]{"", ""};
+            }
+            return new String[]{"float", String.valueOf(val1 / val2)};
+        }
+
+        // For other operations
+        if (e[0].equals(t[0])) {
+            if (e[0].equals("int")) {
+                int val1 = Integer.parseInt(e[1]);
+                int val2 = Integer.parseInt(t[1]);
+                switch (operator) {
+                    case "+": return new String[]{"int", String.valueOf(val1 + val2)};
+                    case "-": return new String[]{"int", String.valueOf(val1 - val2)};
+                    case "*": return new String[]{"int", String.valueOf(val1 * val2)};
+                }
+            } else { // float
+                float val1 = Float.parseFloat(e[1]);
+                float val2 = Float.parseFloat(t[1]);
+                switch (operator) {
+                    case "+": return new String[]{"float", String.valueOf(val1 + val2)};
+                    case "-": return new String[]{"float", String.valueOf(val1 - val2)};
+                    case "*": return new String[]{"float", String.valueOf(val1 * val2)};
+                }
+            }
+        } else {
+            // Mixed types (int and float) - promote to float
+            float val1 = Float.parseFloat(e[1]);
+            float val2 = Float.parseFloat(t[1]);
+            switch (operator) {
+                case "+": return new String[]{"float", String.valueOf(val1 + val2)};
+                case "-": return new String[]{"float", String.valueOf(val1 - val2)};
+                case "*": return new String[]{"float", String.valueOf(val1 * val2)};
+            }
+        }
+
+        return new String[]{"", ""};
+    }
+
+    // Helper method for logging arithmetic operations
+    public void logArithmeticOperation(String operator, String[] e, String[] t, String[] result) {
+        if (result != null && result.length >= 2 && !result[0].isEmpty()) {
+            System.out.println("Operacion " + operator + " entre " +
+                             e[0] + "(" + e[1] + ") y " +
+                             t[0] + "(" + t[1] + ") = " +
+                             result[0] + "(" + result[1] + ")");
+        }
+    }
 :}
 
 /* Terminales palabras reservadas */
@@ -145,8 +315,7 @@ non terminal declaraciones, bloque_importaciones,
             ;
 
 non terminal
-            expresion_logica,
-            termino_logico, lista_expresiones
+            lista_expresiones
             ;
 
 non terminal estructura_control, sentencia_if, sentencia_while, sentencia_for,
@@ -157,7 +326,7 @@ non terminal estructura_control, sentencia_if, sentencia_while, sentencia_for,
 
 non terminal casting_funcion;
 
-non terminal String[] valor_asignacion, expresion,expresion_aritmetica, termino, factor, cadena, booleano, numero, llamada_funcion;
+non terminal String[] valor_asignacion, expresion,expresion_aritmetica, termino, factor, cadena, booleano, numero, llamada_funcion, termino_logico, expresion_logica;
 
 
 
@@ -204,7 +373,7 @@ dec_variables ::=
 /* Declaración individual de variable */
 dec_var_individual ::= IDENTIFIER:id EQUAL valor_asignacion:valor
 {:
-    System.out.println("Asignación detectada: " + id + " = " + valor[1]);
+    System.out.println("Asignacion detectada: " + id + " = " + valor[1]);
     if (!valor[0].isEmpty()) {
         parser.agregarVariable(id, valor[0], valor[1], "metodo");
     } else {
@@ -233,8 +402,8 @@ lista_valores ::=
 /* valores de asignaciones, EXPRESION ARTIMETICA CUBRE NUMERO E IDENTIFICADOR*/
 valor_asignacion ::=
     expresion_aritmetica:e {: RESULT = e; :} |
+    expresion_logica: e {: RESULT = e; :} |
     cadena:c {: RESULT = c; :} |
-    booleano:b {: RESULT = b; :} |
     llamada_funcion:f {: RESULT = f;:}
     ;
 
@@ -381,7 +550,7 @@ parametro::= IDENTIFIER
 /* -------------------------- */
 expresion ::=
    expresion_aritmetica:ea {: RESULT = ea; System.out.println("Es una expresion aritmetica"); :} |
-   expresion_logica {: System.out.println("Es una expresion logica"); :} |
+   expresion_logica:el {: RESULT = el; System.out.println("Es una expresion logica"); :} |
    llamada_funcion:f {:RESULT = f; System.out.println("Es una expresion que llama una FUNCION"); :}
    ;
 
@@ -413,55 +582,13 @@ expresion_aritmetica ::=
    termino:t {: RESULT = t; :} |
    expresion_aritmetica:e PLUS termino:t
    {:
-      if (e != null && t != null && e.length >= 2 && t.length >= 2) {
-         // Si el tipo es el mismo en ambos
-         if (e[0].equals(t[0])) {
-            if (e[0].equals("int")) {
-               String suma_int = String.valueOf(Integer.parseInt(e[1]) + Integer.parseInt(t[1]));
-               RESULT = new String[]{"int", suma_int};
-               System.out.println("val1"+e[1]+","+"val2"+"="+suma_int);
-            } else if (e[0].equals("float")) {
-               RESULT = new String[]{"float", String.valueOf(Float.parseFloat(e[1]) + Float.parseFloat(t[1]))};
-            }
-         } else {
-            // Si los tipos son numeros pero diferentes se toma float para no perder precision
-            if ((e[0].equals("int") || e[0].equals("float")) && (t[0].equals("int") || t[0].equals("float"))) {
-                RESULT = new String[]{"float", String.valueOf(Float.parseFloat(e[1]) + Float.parseFloat(t[1]))};
-            } else {
-                System.out.println("\033[31m" + "Error: Type mismatch in arithmetic operation" + "\033[0m");
-                RESULT = new String[]{"", ""};
-            }
-         }
-      } else {
-         RESULT = new String[]{"", ""};
-      }
-      System.out.println("Operacion de suma");
+      RESULT = parser.handleArithmeticOperation(e, t, "+");
+      parser.logArithmeticOperation("suma", e, t, (String[])RESULT);
    :} |
    expresion_aritmetica:e MINUS termino:t
    {:
-      if (e != null && t != null && e.length >= 2 && t.length >= 2) {
-         // Si el tipo es el mismo en ambos
-         if (e[0].equals(t[0])) {
-            if (e[0].equals("int")) {
-               String suma_int = String.valueOf(Integer.parseInt(e[1]) - Integer.parseInt(t[1]));
-               RESULT = new String[]{"int", suma_int};
-               System.out.println("val1"+e[1]+","+"val2"+"="+suma_int);
-            } else if (e[0].equals("float")) {
-               RESULT = new String[]{"float", String.valueOf(Float.parseFloat(e[1]) - Float.parseFloat(t[1]))};
-            }
-         } else {
-            // Si los tipos son numeros pero diferentes se toma float para no perder precision
-            if ((e[0].equals("int") || e[0].equals("float")) && (t[0].equals("int") || t[0].equals("float"))) {
-                RESULT = new String[]{"float", String.valueOf(Float.parseFloat(e[1]) - Float.parseFloat(t[1]))};
-            } else {
-                System.out.println("\033[31m" + "Error: Type mismatch in arithmetic operation" + "\033[0m");
-                RESULT = new String[]{"", ""};
-            }
-         }
-      } else {
-         RESULT = new String[]{"", ""};
-      }
-      System.out.println("Operacion de suma");
+      RESULT = parser.handleArithmeticOperation(e, t, "-");
+      parser.logArithmeticOperation("resta", e, t, (String[])RESULT);
    :}
    ;
 
@@ -469,55 +596,13 @@ termino ::=
    factor:f {: RESULT = f; :} |
    termino:e MULTIPLY factor:t
    {:
-      if (e != null && t != null && e.length >= 2 && t.length >= 2) {
-         // Si el tipo es el mismo en ambos
-         if (e[0].equals(t[0])) {
-            if (e[0].equals("int")) {
-               String suma_int = String.valueOf(Integer.parseInt(e[1]) * Integer.parseInt(t[1]));
-               RESULT = new String[]{"int", suma_int};
-               System.out.println("val1"+e[1]+","+"val2"+"="+suma_int);
-            } else if (e[0].equals("float")) {
-               RESULT = new String[]{"float", String.valueOf(Float.parseFloat(e[1]) * Float.parseFloat(t[1]))};
-            }
-         } else {
-            // Si los tipos son numeros pero diferentes se toma float para no perder precision
-            if ((e[0].equals("int") || e[0].equals("float")) && (t[0].equals("int") || t[0].equals("float"))) {
-                RESULT = new String[]{"float", String.valueOf(Float.parseFloat(e[1]) * Float.parseFloat(t[1]))};
-            } else {
-                System.out.println("\033[31m" + "Error: Type mismatch in arithmetic operation" + "\033[0m");
-                RESULT = new String[]{"", ""};
-            }
-         }
-      } else {
-         RESULT = new String[]{"", ""};
-      }
-      System.out.println("Operacion de suma");
+      RESULT = parser.handleArithmeticOperation(e, t, "*");
+      parser.logArithmeticOperation("multiplicacion", e, t, (String[])RESULT);
    :} |
    termino:e DIVIDE factor:t
    {:
-      if (e != null && t != null && e.length >= 2 && t.length >= 2) {
-         // Si el tipo es el mismo en ambos
-         if (e[0].equals(t[0])) {
-            if (e[0].equals("int")) {
-               String suma_int = String.valueOf(Float.parseFloat(e[1]) / Float.parseFloat(t[1]));
-               RESULT = new String[]{"float", suma_int};
-               System.out.println("val1"+e[1]+","+"val2"+"="+suma_int);
-            } else if (e[0].equals("float")) {
-               RESULT = new String[]{"float", String.valueOf(Float.parseFloat(e[1]) / Float.parseFloat(t[1]))};
-            }
-         } else {
-            // Si los tipos son numeros pero diferentes se toma float para no perder precision
-            if ((e[0].equals("int") || e[0].equals("float")) && (t[0].equals("int") || t[0].equals("float"))) {
-                RESULT = new String[]{"float", String.valueOf(Float.parseFloat(e[1]) / Float.parseFloat(t[1]))};
-            } else {
-                System.out.println("\033[31m" + "Error: Type mismatch in arithmetic operation" + "\033[0m");
-                RESULT = new String[]{"", ""};
-            }
-         }
-      } else {
-         RESULT = new String[]{"", ""};
-      }
-      System.out.println("Operacion de suma");
+      RESULT = parser.handleArithmeticOperation(e, t, "/");
+      parser.logArithmeticOperation("division", e, t, (String[])RESULT);
    :}
    ;
 
@@ -539,23 +624,43 @@ factor ::=
    LPAREN expresion_aritmetica:e RPAREN {: RESULT = e; :}
    ;
 
-
 expresion_logica ::=
-   termino_logico                       {: System.out.println("Es un termino logico "); :} |
-   expresion_logica AND termino_logico  {: System.out.println("Expresion logica(AND)"); :} |
-   expresion_logica OR termino_logico   {: System.out.println("Expresion logica(OR)"); :} |
-   expresion_logica AND error  {: System.out.println("Expresion logica(AND), ERROR: SE ESPERABA UN TERMINO LOGICO"); :} |
-   expresion_logica OR  error   {: System.out.println("Expresion logica(OR), ERROR: SE ESPERABA UN TERMINO LOGICO"); :}
-   ;
-
+    termino_logico:tl {: RESULT = tl; :} |
+    expresion_logica:el AND termino_logico:tl
+    {: RESULT = parser.handleLogicalOperation(el, tl, "AND"); :} |
+    expresion_logica:el OR termino_logico:tl
+    {: RESULT = parser.handleLogicalOperation(el, tl, "OR"); :} |
+    expresion_logica AND error
+    {: parser.handleLogicalError("AND"); RESULT = new String[]{"", ""}; :} |
+    expresion_logica OR error
+    {: parser.handleLogicalError("OR"); RESULT = new String[]{"", ""}; :}
+    ;
 
 termino_logico ::=
-   expresion_aritmetica DOUBLE_EQUAL expresion_aritmetica {: System.out.println("Comparacion de igualdad"); :} |
-   expresion_aritmetica NOT_EQUAL expresion_aritmetica {: System.out.println("Comparacion de desigualdad"); :} |
-   expresion_aritmetica GREATER_THAN expresion_aritmetica {: System.out.println("Comparacion de mayor que"); :} |
-   expresion_aritmetica LESS_THAN expresion_aritmetica {: System.out.println("Comparacion de menor que"); :} |
-   expresion_aritmetica GREATER_EQUAL expresion_aritmetica {: System.out.println("Comparacion de mayor o igual"); :} |
-   expresion_aritmetica LESS_EQUAL expresion_aritmetica {: System.out.println("Comparacion de menor o igual"); :} |
+   booleano:b {: RESULT = b; :} |
+
+   expresion_aritmetica:e1 DOUBLE_EQUAL expresion_aritmetica:e2
+   {: RESULT = parser.handleComparison(e1, e2, "=="); :} |
+
+   expresion_aritmetica:e1 NOT_EQUAL expresion_aritmetica:e2
+   {: RESULT = parser.handleComparison(e1, e2, "!="); :} |
+
+   expresion_aritmetica:e1 GREATER_THAN expresion_aritmetica:e2
+   {: RESULT = parser.handleComparison(e1, e2, ">"); :} |
+
+   expresion_aritmetica:e1 LESS_THAN expresion_aritmetica:e2
+   {: RESULT = parser.handleComparison(e1, e2, "<"); :} |
+
+   expresion_aritmetica:e1 GREATER_EQUAL expresion_aritmetica:e2
+   {: RESULT = parser.handleComparison(e1, e2, ">="); :} |
+
+   expresion_aritmetica:e1 LESS_EQUAL expresion_aritmetica:e2
+   {: RESULT = parser.handleComparison(e1, e2, "<="); :} |
+
+   NOT termino_logico:tl
+   {: RESULT = parser.handleNotOperation(tl); :} |
+
+   LPAREN expresion_logica:el RPAREN {: RESULT = el; :} |
    expresion_aritmetica DOUBLE_EQUAL error {: System.out.println("TERMINO LOGICO->Comparacion de igualdad, ERROR: Se esperaba una expresion aritmetica"); :} |
    expresion_aritmetica NOT_EQUAL error {: System.out.println("TERMINO LOGICO->Comparacion de desigualdad, ERROR: Se esperaba una expresion aritmetica"); :} |
    expresion_aritmetica GREATER_THAN error {: System.out.println("TERMINO LOGICO->Comparacion de mayor que, ERROR: Se esperaba una expresion aritmetica"); :} |

@@ -9,3 +9,10 @@ class clase:
     var6 = int(var5)
     sum = str(1+2)
     div = str(int(9 / 5))
+    che_bool = True and False
+    a = 2
+    b = 1
+    imposible = 1/0
+    resultadoLogico = (a > b) or (b < 10)
+    resultadoComplejo = (10 + 20) * (30 - 15)
+    errorLogico = (a > b) and "texto"
