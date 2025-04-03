@@ -49,7 +49,7 @@ parser code{:
         }
 
         String tipoOriginal = valor[0];
-        String val = valor[1];
+        String val = valor[1].toString().replaceAll("^['\"]|['\"]$", "");
 
         try {
             switch (tipoCast) {
@@ -79,7 +79,8 @@ parser code{:
                     break;
 
                 case "str":
-                    return new String[]{"string", val.toString()};
+                    return new String[]{"string", val};
+
 
                 case "bool":
                     if (tipoOriginal.equals("boolean")) {
@@ -145,22 +146,6 @@ parser code{:
             return new String[]{"", ""};
         }
 
-        // Helper method for boolean variable lookup
-        public String[] handleBooleanIdentifier(String id) {
-            if (tabla.verificar(id)) {
-                String tipo = tabla.obtenerSimbolo(id).getTipo();
-                if (tipo.equals("boolean")) {
-                    return new String[]{"boolean", tabla.obtenerSimbolo(id).getValor()};
-                } else {
-                    System.out.println("\033[31mError: El identificador " + id + " no es booleano\033[0m");
-                }
-            } else {
-                System.out.println("\033[31mError: Variable " + id + " no definida\033[0m");
-            }
-            return new String[]{"", ""};
-        }
-
-        // Helper method for NOT operation
         public String[] handleNotOperation(String[] tl) {
             if (tl != null && tl.length >= 2 && tl[0].equals("boolean")) {
                 return new String[]{"boolean", String.valueOf(!Boolean.parseBoolean(tl[1]))};
@@ -197,18 +182,16 @@ parser code{:
              return new String[]{"boolean", String.valueOf(result)};
          }
 
-         // Helper method for error handling in logical expressions
          public void handleLogicalError(String operator) {
              System.out.println("\033[31mExpresion logica(" + operator + "), ERROR: Se esperaba un termino logico\033[0m");
          }
 
-    // Helper method for arithmetic operations
     public String[] handleArithmeticOperation(String[] e, String[] t, String operator) {
         if (e == null || t == null || e.length < 2 || t.length < 2) {
             return new String[]{"", ""};
         }
 
-        // Check if both operands are numbers
+        // Checar si ambos son numeros
         boolean eIsNumber = e[0].equals("int") || e[0].equals("float");
         boolean tIsNumber = t[0].equals("int") || t[0].equals("float");
 
@@ -217,7 +200,7 @@ parser code{:
             return new String[]{"", ""};
         }
 
-        // For division, always promote to float
+        // Para division siempre hacer float
         if (operator.equals("/")) {
             float val1 = Float.parseFloat(e[1]);
             float val2 = Float.parseFloat(t[1]);
@@ -228,7 +211,6 @@ parser code{:
             return new String[]{"float", String.valueOf(val1 / val2)};
         }
 
-        // For other operations
         if (e[0].equals(t[0])) {
             if (e[0].equals("int")) {
                 int val1 = Integer.parseInt(e[1]);
@@ -248,7 +230,7 @@ parser code{:
                 }
             }
         } else {
-            // Mixed types (int and float) - promote to float
+            // tipos mezclados int y float convertir a float
             float val1 = Float.parseFloat(e[1]);
             float val2 = Float.parseFloat(t[1]);
             switch (operator) {
@@ -261,7 +243,6 @@ parser code{:
         return new String[]{"", ""};
     }
 
-    // Helper method for logging arithmetic operations
     public void logArithmeticOperation(String operator, String[] e, String[] t, String[] result) {
         if (result != null && result.length >= 2 && !result[0].isEmpty()) {
             System.out.println("Operacion " + operator + " entre " +
