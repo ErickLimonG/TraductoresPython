@@ -645,6 +645,9 @@ termino_logico ::=
    NOT termino_logico:tl
    {: RESULT = parser.handleNotOperation(tl); :} |
 
+   NOT factor:tl
+   {: RESULT = parser.handleNotOperation(tl); :} |
+
    LPAREN expresion_logica:el RPAREN {: RESULT = el; :} |
    expresion_aritmetica DOUBLE_EQUAL error {: System.out.println("TERMINO LOGICO->Comparacion de igualdad, ERROR: Se esperaba una expresion aritmetica"); :} |
    expresion_aritmetica NOT_EQUAL error {: System.out.println("TERMINO LOGICO->Comparacion de desigualdad, ERROR: Se esperaba una expresion aritmetica"); :} |

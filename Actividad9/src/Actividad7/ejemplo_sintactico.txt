@@ -19,8 +19,14 @@ class clase:
     resultadoLogico = (a > b) or (b < 10)
     resultadoComplejo = (10 + 20) * (30 - 15)
     errorLogico = (a > b) and "texto"
-    pedro = 1, jose = "boring", flotante_tio = 90.99
     resultadoLogico2 = False or False
     resultadoLogico3 = (a > b) or (a > 1)
     nay = not True or (a > b)
     naynay = not True
+    che_as = not che_bool and False
+    che_mario = not (True)
+    valor = (5 + 3) * (10 - 2) / 4
+    #total = float(5) + int("10")
+    verdadero = True and False or True
+    comparacion = (5 > 3) and (20 <= 20)
+    inverso = not (True or False)
