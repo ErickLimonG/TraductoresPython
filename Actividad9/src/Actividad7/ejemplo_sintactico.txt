@@ -23,10 +23,12 @@ class clase:
     resultadoLogico3 = (a > b) or (a > 1)
     nay = not True or (a > b)
     naynay = not True
-    che_as = not che_bool and False
+    #che_as = not che_bool and False
     che_mario = not (True)
     valor = (5 + 3) * (10 - 2) / 4
     #total = float(5) + int("10")
     verdadero = True and False or True
     comparacion = (5 > 3) and (20 <= 20)
     inverso = not (True or False)
+    val_neg = -1 - ------2
+    val_neg_float = -1.1 - -2.983

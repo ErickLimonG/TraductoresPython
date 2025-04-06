@@ -262,7 +262,7 @@ terminal NONE, AND, OR, NOT, IS, IF, ELSE,
 terminal INDENT, DEDENT;
 
 /* Terminales operadores */
-terminal PLUS, MINUS, MULTIPLY, DIVIDE, EQUAL, DOUBLE_EQUAL, NOT_EQUAL,
+terminal PLUS, MINUS, UMINUS , MULTIPLY, DIVIDE, EQUAL, DOUBLE_EQUAL, NOT_EQUAL,
 LESS_THAN, GREATER_THAN, LESS_EQUAL, GREATER_EQUAL, MODULE;
 
 
@@ -307,11 +307,14 @@ non terminal estructura_control, sentencia_if, sentencia_while, sentencia_for,
 
 non terminal casting_funcion;
 
-non terminal String[] valor_asignacion, expresion,expresion_aritmetica, termino, factor, cadena, booleano, numero, llamada_funcion, termino_logico, expresion_logica;
-
+non terminal String[] valor_asignacion, expresion,expresion_aritmetica, termino, factor, cadena, booleano, numero, llamada_funcion, termino_logico, expresion_logica,acceso_variable;
 
 
 non terminal programa;
+
+precedence left PLUS, MINUS;
+precedence left MULTIPLY, DIVIDE;
+precedence left UMINUS;
 
 start with programa;
 /* -------------------------- */
@@ -508,7 +511,7 @@ dec_cuerpo_clase::= dec_variables |
 
 dec_metodo ::=
     DEF IDENTIFIER LPAREN parametros RPAREN COLON INDENT bloque DEDENT
-    {: System.out.println("=============DEFINICION DE METODO============="); :} 
+    {: System.out.println("=============DEFINICION DE METODO============="); :}
     |
     DEF IDENTIFIER LPAREN RPAREN COLON INDENT bloque DEDENT
     {: System.out.println("=============DEFINICION DE METODO SIN PARAMETROS============="); :}
@@ -562,7 +565,19 @@ casting_funcion ::=
    CAST_STR {: RESULT = "str"; :} |
    CAST_BOOL {: RESULT = "bool"; :}
 ;
-
+// Regla base para acceso a variables (compartida)
+acceso_variable ::=
+   IDENTIFIER:id
+   {:
+       if(parser.tabla.verificar(id)) {
+           Simbolo s = parser.tabla.obtenerSimbolo(id);
+           RESULT = new String[]{s.getTipo(), s.getValor()};
+       } else {
+           System.out.println("Error: Variable '"+id+"' no definida");
+           RESULT = new String[]{"", ""};
+       }
+   :}
+   ;
 expresion_aritmetica ::=
    termino:t {: RESULT = t; :} |
    expresion_aritmetica:e PLUS termino:t
@@ -592,20 +607,32 @@ termino ::=
    ;
 
 factor ::=
-   IDENTIFIER:id
+    acceso_variable:v {: RESULT = v; :}
+   |
+   MINUS factor:f
    {:
-       System.out.println("Valor identifier: "+ id);
-       if(parser.tabla.verificar(id)){
-           RESULT = new String[]{
-               parser.tabla.obtenerSimbolo(id).getTipo(),
-               parser.tabla.obtenerSimbolo(id).getValor()
-           };
-       }else{
-           System.out.println("Error: Variable '"+id+"' no definida");
-           RESULT = new String[]{"", ""};
+        boolean isInt = f instanceof String[] && ((String[])f)[0].equals("int");
+        boolean isFloat = f instanceof String[] && ((String[])f)[0].equals("float");
+       if (isInt || isFloat) {
+           try {
+                if (isInt){
+                    int val = Integer.parseInt(((String[])f)[1]);
+                    RESULT = new String[]{"int", String.valueOf(-val)};
+                }else{
+                    float val = Float.parseFloat(((String[])f)[1]);
+                    RESULT = new String[]{"float", String.valueOf(-val)};
+                }
+           } catch (NumberFormatException e) {
+               RESULT = new String[]{"error", "Invalid number format"};
+           }
+       } else {
+           System.out.println("Error: Cannot apply unary minus to non-numeric value");
+           RESULT = new String[]{"error", "Invalid operand for unary minus"};
        }
-   :} |
-   numero:n {: RESULT = n; :} |
+   :} %prec UMINUS
+   |
+   numero:n {: RESULT = n; :}
+   |
    LPAREN expresion_aritmetica:e RPAREN {: RESULT = e; :}
    ;
 
@@ -623,7 +650,6 @@ expresion_logica ::=
 
 termino_logico ::=
    booleano:b {: RESULT = b; :} |
-
    expresion_aritmetica:e1 DOUBLE_EQUAL expresion_aritmetica:e2
    {: RESULT = parser.handleComparison(e1, e2, "=="); :} |
 
@@ -643,9 +669,6 @@ termino_logico ::=
    {: RESULT = parser.handleComparison(e1, e2, "<="); :} |
 
    NOT termino_logico:tl
-   {: RESULT = parser.handleNotOperation(tl); :} |
-
-   NOT factor:tl
    {: RESULT = parser.handleNotOperation(tl); :} |
 
    LPAREN expresion_logica:el RPAREN {: RESULT = el; :} |
