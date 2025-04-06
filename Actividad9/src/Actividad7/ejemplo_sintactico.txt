@@ -1,5 +1,5 @@
 import algo
-
+global = "jose"
 class clase:
     v1 = "wow",v2="100",v3=99.4,v5=45
     v9 = int(v2)
@@ -30,5 +30,11 @@ class clase:
     verdadero = True and False or True
     comparacion = (5 > 3) and (20 <= 20)
     inverso = not (True or False)
-    val_neg = -1 - ------2
-    val_neg_float = -1.1 - -2.983
+    def suma(a,b):
+        val_neg = -1 - ------2
+        val_neg_float = -1.1 - -2.983
+        val_n_str = str(-val_neg --- val_neg_float)
+    def resta(a,b):
+        val_neg = -1 - ------2
+        val_neg_float = -1.1 - -2.983
+        val_n_str = str(-val_neg --- val_neg_float)

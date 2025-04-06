@@ -26,7 +26,7 @@ parser code{:
                 Simbolo simbolo = new Simbolo(id, tipo, valor, contexto);
                 if (tabla.agregar(id, simbolo)) {
                     System.out.println(VERDE + "--------Variable agregada con referencia--------> "  + "nombre " + id +",tipo "+ tipo + ", valor " + valor + RESET);
-                    System.out.println(tabla.mostrar());
+                    //System.out.println(tabla.mostrar());
                     return;
                 }
             } else {
@@ -38,7 +38,7 @@ parser code{:
         Simbolo simbolo = new Simbolo(id, tipo, valor, contexto);
         if (tabla.agregar(id, simbolo)) {
             System.out.println(VERDE + "--------Variable agregada--------> " + "nombre " + id +",tipo "+ tipo + ", valor " + valor + RESET);
-            System.out.println(tabla.mostrar());
+            //System.out.println(tabla.mostrar());
         } else {
             System.out.println(ROJO + "-------Variable NO agregada-------> " + id + RESET);
         }
@@ -274,6 +274,7 @@ BACK_SLASH, PIPE, LPAREN, RPAREN;
 /* Terminales expresiones regulares
     terminal IDENTIFIER, INTEGER, FLOAT, STRING, STRING_SIMPLE, CHAR;
  */
+terminal THIS;
 
 terminal String IDENTIFIER;
 terminal String INTEGER;
@@ -305,6 +306,10 @@ non terminal estructura_control, sentencia_if, sentencia_while, sentencia_for,
             bloque_clases, clase, cuerpo_clase, dec_metodo, declaracion_variable,
             parametros, cuerpo_metodo, parametro, dec_cuerpo_clase;
 
+non terminal String[] dec_variables_clase,dec_var_individual_clase,dec_var_multiple_clase, valor_asignacion_clase,
+                      dec_var_individual_metodo,dec_var_multiple_metodo, dec_variables_metodo
+                      ;
+
 non terminal casting_funcion;
 
 non terminal String[] valor_asignacion, expresion,expresion_aritmetica, termino, factor, cadena, booleano, numero, llamada_funcion, termino_logico, expresion_logica,acceso_variable;
@@ -327,7 +332,7 @@ lista_expresiones ::=
                  ;
 */
 programa ::=
-        dec_importaciones bloque_clases
+        dec_importaciones dec_variables bloque_clases
         ;
 /* -------------------------- */
         /* Importaciones */
@@ -347,19 +352,66 @@ lista_identificador_punto ::=
    lista_identificador_punto DOT IDENTIFIER |
    IDENTIFIER;
 /* -------------------------- */
-/* Declaracion de variables */
+/* Declaracion de variables   */
 /* -------------------------- */
 /* Regla principal para declaraciones de variables */
 dec_variables ::=
-         dec_var_multiple
+         dec_var_multiple |
+         /* O nadota para la declaracion de variables globales ---WARNING--- a lo mejor da problemas */
     ;
+dec_variables_clase ::=
+            dec_var_multiple_clase
+        ;
+dec_variables_metodo ::=
+            dec_var_multiple_metodo
+        ;
+/* METODO */
+dec_var_individual_metodo ::= IDENTIFIER:id EQUAL valor_asignacion:valor
+{:
+    System.out.println("Asignacion detectada en metodo: " + id + " = " + valor[1]);
+    if (!valor[0].isEmpty()) {
+        parser.agregarVariable(id, valor[0], valor[1], "metodo");
+    } else {
+        System.out.println("ERROR: Variable '" + id + "' no puede ser asignada porque el valor es indefinido.");
+    }
+:}
+;
+dec_var_multiple_metodo ::=
+    dec_var_individual_metodo |
+    dec_var_multiple_metodo COMMA IDENTIFIER:id EQUAL valor_asignacion:valor
+    {:
+        System.out.println("Asignacion detectada en metodo: " + id + " = " + valor[1]);
+        parser.agregarVariable(id, valor[0], valor[1], "metodo");
+    :}
+;
+/* CLASE */
+/* Declaración individual de variable */
+dec_var_individual_clase ::= IDENTIFIER:id EQUAL valor_asignacion:valor
+{:
+    System.out.println("Asignacion detectada en clase: " + id + " = " + valor[1]);
+    if (!valor[0].isEmpty()) {
+        parser.agregarVariable(id, valor[0], valor[1], "clase");
+    } else {
+        System.out.println("ERROR: Variable '" + id + "' no puede ser asignada porque el valor es indefinido.");
+    }
+:}
+;
+dec_var_multiple_clase ::=
+    dec_var_individual_clase |
+    dec_var_multiple_clase COMMA IDENTIFIER:id EQUAL valor_asignacion:valor
+    {:
+        System.out.println("Asignacion detectada en clase: " + id + " = " + valor[1]);
+        parser.agregarVariable(id, valor[0], valor[1], "clase");
+    :}
+;
 
+/* GLOBAL */
 /* Declaración individual de variable */
 dec_var_individual ::= IDENTIFIER:id EQUAL valor_asignacion:valor
 {:
     System.out.println("Asignacion detectada: " + id + " = " + valor[1]);
     if (!valor[0].isEmpty()) {
-        parser.agregarVariable(id, valor[0], valor[1], "metodo");
+        parser.agregarVariable(id, valor[0], valor[1], "global");
     } else {
         System.out.println("ERROR: Variable '" + id + "' no puede ser asignada porque el valor es indefinido.");
     }
@@ -372,7 +424,7 @@ dec_var_multiple ::=
     dec_var_multiple COMMA IDENTIFIER:id EQUAL valor_asignacion:valor
     {:
         System.out.println("Asignacion detectada: " + id + " = " + valor[1]);
-        parser.agregarVariable(id, valor[0], valor[1], "metodo");
+        parser.agregarVariable(id, valor[0], valor[1], "global");
     :}
 ;
 
@@ -482,8 +534,8 @@ sentencia ::=
     {: System.out.println("Sentencia de expresion"); :} |
     estructura_control
     {: System.out.println("Sentencia de control"); :} |
-    dec_variables
-    {: System.out.println("Sentencia de declaracion"); :}
+    dec_variables_metodo
+    {: System.out.println("Sentencia de declaracion en metodo"); :}
     ;
 
 /* -------------------------- */
@@ -505,7 +557,8 @@ cuerpo_clase::= dec_cuerpo_clase |
                 cuerpo_clase dec_cuerpo_clase
                ;
 
-dec_cuerpo_clase::= dec_variables |
+dec_cuerpo_clase::=
+                    dec_variables_clase |
                     dec_metodo
                     ;
 
@@ -627,7 +680,7 @@ factor ::=
            }
        } else {
            System.out.println("Error: Cannot apply unary minus to non-numeric value");
-           RESULT = new String[]{"error", "Invalid operand for unary minus"};
+           //RESULT = new String[]{"error", "Invalid operand for unary minus"};
        }
    :} %prec UMINUS
    |

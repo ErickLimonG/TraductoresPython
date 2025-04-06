@@ -12,6 +12,7 @@ public class TablaSimbolos {//nombres de variables, constantes, metodos, clases
     final String ROJO = "\033[31m";
     final String VERDE = "\033[32m";
     final String AMARILLO = "\033[33m";
+    final String CIAN = "\033[36m";
     private Map<String,Simbolo> tabla;
 
     public TablaSimbolos(){
@@ -20,7 +21,12 @@ public class TablaSimbolos {//nombres de variables, constantes, metodos, clases
     
     public boolean agregar(String nombre, Simbolo simbolo){
         if(tabla.containsKey(nombre))
-            return false;
+        {
+            tabla.remove(nombre, simbolo);
+            tabla.put(nombre, simbolo);
+            System.out.println(CIAN+"ACTUALIZACION DE VARIABLE"+RESET);
+            return true;
+        }
         else{
             tabla.put(nombre, simbolo);
             return true;

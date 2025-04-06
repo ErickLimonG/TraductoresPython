@@ -96,6 +96,7 @@ import java.util.Stack;
 "from" { return symbol(sym.FROM, yytext()); }
 "in" { return symbol(sym.IN, yytext()); }
 "as" { return symbol(sym.AS, yytext()); }
+"self" { return symbol(sym.THIS, yytext()); }
 
 /* Casting */
 "int" { return symbol(sym.CAST_INT, yytext()); }
