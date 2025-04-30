@@ -1,0 +1,36 @@
+import algo
+global = "jose"
+class clase:
+    c = 2
+    d = 4
+
+    def suma(a,b):
+        return a+b
+
+    var = suma(a,b,d)
+    var = suma(a,b)
+
+    if c>d:
+        z = 6
+    else:
+        z = 8
+
+    if c<d:
+        z = 6
+        if c>1:
+            z = 1
+
+    if "jose":
+        messi="en cara messi"
+
+    for i in range(10):
+        z =10
+    # 2 > 4
+    while c>d:
+        # no se cumple condicion
+        z = a
+    # 2 < 4
+    while c<d:
+        # loop 
+        c = c + 1
+        
