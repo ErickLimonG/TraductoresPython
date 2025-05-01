@@ -1,0 +1,14 @@
+import algo
+
+class Main:
+    day = 4
+    match day:
+      case 1:
+        j = 1
+      case 2:
+        j = 1
+      case 3:
+        j = 1
+      case _:
+        e = 2
+

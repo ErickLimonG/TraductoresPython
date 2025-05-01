@@ -1,0 +1,1041 @@
+/* LIMON GUVERA ERICK ANTONIO  */
+/* PIEDRA FLORES AXEL JESUS  */
+/* RODRIGUEZ MARTINEZ LEONARDO JAVIER  */
+
+package Actividad7;
+
+import java_cup.runtime.*;
+import java.util.List;
+import java.util.Stack;
+import java.util.ArrayList;
+
+parser code{:
+    public static TablaSimbolos tabla=new TablaSimbolos();
+    public static Generador generador = new Generador();
+    public static EscribirTXT txtWriter = new EscribirTXT();
+    public static Simbolo simbolo;
+
+    public void syntax_error(Symbol s){
+       System.out.println("Error sintactico en ["+s.left+":"+(s.right-1)+"], token inesperado "+s.value);
+    }
+
+    public void agregarMetodo(String nombreMetodo, String parametrosStr, String tipoRetorno, String contexto) {
+        final String RESET = "\033[0m";
+        final String ROJO = "\033[31m";
+        final String VERDE = "\033[32m";
+        final String AMARILLO = "\033[33m";
+        final String CIAN = "\033[36m";
+
+        // Crear el símbolo para el método
+        Simbolo simboloMetodo = new Simbolo(nombreMetodo, tipoRetorno, "0", contexto);
+
+        // Llamar al método de TablaSimbolos
+        if (tabla.agregarMetodo(nombreMetodo, parametrosStr, simboloMetodo)) {
+            // Obtener número de parámetros para el mensaje
+            int numParams = tabla.obtenerNumeroParametros(nombreMetodo);
+
+            /*System.out.println(VERDE + "--------Método agregado--------> " +
+                             "Nombre: " + nombreMetodo +
+                             ", Tipo retorno: " + tipoRetorno +
+                             ", Parámetros: " + numParams +
+                             " (" + parametrosStr + ")" + RESET);*/
+
+            // Mostrar los parámetros individualmente
+            if (numParams > 0) {
+                //System.out.println(CIAN + "Parámetros del método " + nombreMetodo + ":");
+                List<String> params = tabla.obtenerParametrosMetodo(nombreMetodo);
+                for (String param : params) {
+                    //System.out.println("  - " + param + " (parámetro)");
+                }
+                System.out.print(RESET);
+            }
+        } else {
+            //System.out.println(ROJO + "-------Método NO agregado-------> " +
+            //                 nombreMetodo + " ya existe" + RESET);
+        }
+    }
+    public void agregarVariable(String id, String tipo, String valor, String contexto) {
+        final String RESET = "\033[0m";
+        final String ROJO = "\033[31m";
+        final String VERDE = "\033[32m";
+        final String AMARILLO = "\033[33m";
+
+        if (tipo.equals("variable")) {
+            Simbolo variable_simbolo = tabla.obtenerSimbolo(valor);
+            if (variable_simbolo != null) {
+                tipo = variable_simbolo.getTipo();
+                valor = variable_simbolo.getValor();
+                Simbolo simbolo = new Simbolo(id, tipo, valor, contexto);
+                if (tabla.agregar(id, simbolo)) {
+                    //System.out.println(VERDE + "--------Variable agregada con referencia--------> "  + "nombre " + id +",tipo "+ tipo + ", valor " + valor + RESET);
+                    ////System.out.println(tabla.mostrar());
+                    return;
+                }
+            } else {
+                //System.out.println(ROJO + "-------Variable NO agregada, no se encuentra la variable referenciada-------> " + id + RESET);
+                return;
+            }
+        }
+
+        Simbolo simbolo = new Simbolo(id, tipo, valor, contexto);
+        if (tabla.agregar(id, simbolo)) {
+            //System.out.println(VERDE + "--------Variable agregada--------> " + "nombre " + id +",tipo "+ tipo + ", valor " + valor + RESET);
+            ////System.out.println(tabla.mostrar());
+        } else {
+            //System.out.println(ROJO + "-------Variable NO agregada-------> " + id + RESET);
+        }
+    }
+    public String[] realizarCasting(String tipoCast, String[] valor) {
+        if (valor == null || valor.length < 2) {
+            return new String[]{"", ""};
+        }
+
+        String tipoOriginal = valor[0];
+        String val = valor[1].toString().replaceAll("^['\"]|['\"]$", "");
+
+        try {
+            switch (tipoCast) {
+                case "int":
+                    if (tipoOriginal.equals("int")) {
+                        return valor; // No need to cast
+                    } else if (tipoOriginal.equals("float")) {
+                        return new String[]{"int", String.valueOf((int)Float.parseFloat(val))};
+                    } else if (tipoOriginal.equals("string")) {
+                        // Try to parse string as number
+                        return new String[]{"int", String.valueOf(Integer.parseInt(val.trim()))};
+                    } else if (tipoOriginal.equals("boolean")) {
+                        return new String[]{"int", val.equals("true") ? "1" : "0"};
+                    }
+                    break;
+
+                case "float":
+                    if (tipoOriginal.equals("float")) {
+                        return valor;
+                    } else if (tipoOriginal.equals("int")) {
+                        return new String[]{"float", String.valueOf(Float.parseFloat(val))};
+                    } else if (tipoOriginal.equals("string")) {
+                        return new String[]{"float", String.valueOf(Float.parseFloat(val.trim()))};
+                    } else if (tipoOriginal.equals("boolean")) {
+                        return new String[]{"float", val.equals("true") ? "1.0" : "0.0"};
+                    }
+                    break;
+
+                case "str":
+                    return new String[]{"string", val};
+
+
+                case "bool":
+                    if (tipoOriginal.equals("boolean")) {
+                        return valor;
+                    } else if (tipoOriginal.equals("int") || tipoOriginal.equals("float")) {
+                        boolean isNonZero = tipoOriginal.equals("int") ?
+                            Integer.parseInt(val) != 0 : Float.parseFloat(val) != 0.0f;
+                        return new String[]{"boolean", String.valueOf(isNonZero)};
+                    } else if (tipoOriginal.equals("string")) {
+                        return new String[]{"boolean", String.valueOf(!val.isEmpty())};
+                    }
+                    break;
+            }
+        } catch (NumberFormatException e) {
+            System.err.println("Error de casting: no se puede convertir " + val + " a " + tipoCast);
+        }
+
+        return new String[]{"", ""};
+    }
+
+     public String[] handleComparison(String[] e1, String[] e2, String operator) {
+            if (e1 == null || e2 == null || e1.length < 2 || e2.length < 2) {
+                return new String[]{"", ""};
+            }
+
+            switch (operator) {
+                case "==":
+                case "!=":
+                    if (e1[0].equals(e2[0])) {
+                        boolean result = operator.equals("==") ?
+                            e1[1].equals(e2[1]) : !e1[1].equals(e2[1]);
+                        //System.out.println("Comparación de " + (operator.equals("==") ? "igualdad" : "desigualdad") +
+                        //                 " entre tipos compatibles: " + e1[0]);
+                        return new String[]{"boolean", String.valueOf(result)};
+                    }
+                    break;
+
+                case ">":
+                case "<":
+                case ">=":
+                case "<=":
+                    if ((e1[0].equals("int") || e1[0].equals("float")) &&
+                        (e2[0].equals("int") || e2[0].equals("float"))) {
+                        float val1 = Float.parseFloat(e1[1]);
+                        float val2 = Float.parseFloat(e2[1]);
+                        boolean result = false;
+
+                        switch (operator) {
+                            case ">": result = val1 > val2; break;
+                            case "<": result = val1 < val2; break;
+                            case ">=": result = val1 >= val2; break;
+                            case "<=": result = val1 <= val2; break;
+                        }
+
+                        //System.out.println("Comparacion " + operator + " entre numeros");
+                        return new String[]{"boolean", String.valueOf(result)};
+                    }
+                    break;
+            }
+
+            //System.out.println("\033[31mError: No se pueden comparar " + e1[0] + " con " + e2[0] +
+            //                 " usando " + operator + "\033[0m");
+            return new String[]{"", ""};
+        }
+
+        public String[] handleNotOperation(String[] tl) {
+            if (tl != null && tl.length >= 2 && tl[0].equals("boolean")) {
+                return new String[]{"boolean", String.valueOf(!Boolean.parseBoolean(tl[1]))};
+            }
+            //System.out.println("\033[31mError: Operador NOT requiere un operando booleano\033[0m");
+            return new String[]{"", ""};
+        }
+
+         public String[] handleLogicalOperation(String[] el, String[] tl, String operator) {
+             if (el == null || tl == null || el.length < 2 || tl.length < 2) {
+                 return new String[]{"", ""};
+             }
+
+             if (!el[0].equals("boolean") || !tl[0].equals("boolean")) {
+                 //System.out.println("\033[31mError: Operador " + operator + " requiere operandos booleanos\033[0m");
+                 return new String[]{"", ""};
+             }
+
+             boolean val1 = Boolean.parseBoolean(el[1]);
+             boolean val2 = Boolean.parseBoolean(tl[1]);
+             boolean result = false;
+
+             switch (operator) {
+                 case "AND":
+                     result = val1 && val2;
+                     //System.out.println("Operacion logica AND entre " + val1 + " y " + val2);
+                     break;
+                 case "OR":
+                     result = val1 || val2;
+                     //System.out.println("Operacion logica OR entre " + val1 + " y " + val2);
+                     break;
+             }
+
+             return new String[]{"boolean", String.valueOf(result)};
+         }
+
+         public void handleLogicalError(String operator) {
+             //System.out.println("\033[31mExpresion logica(" + operator + "), ERROR: Se esperaba un termino logico\033[0m");
+         }
+
+    public String[] handleArithmeticOperation(String[] e, String[] t, String operator) {
+        if (e == null || t == null || e.length < 2 || t.length < 2) {
+            return new String[]{"", ""};
+        }
+
+        // Checar si ambos son numeros
+        boolean eIsNumber = e[0].equals("int") || e[0].equals("float");
+        boolean tIsNumber = t[0].equals("int") || t[0].equals("float");
+
+        if (!eIsNumber || !tIsNumber) {
+            //System.out.println("\033[31mError: Operador " + operator + " requiere operandos numericos\033[0m");
+            return new String[]{"", ""};
+        }
+
+        // Para division siempre hacer float
+        if (operator.equals("/")) {
+            float val1 = Float.parseFloat(e[1]);
+            float val2 = Float.parseFloat(t[1]);
+            if (val2 == 0) {
+                System.out.println("\033[31mError: Division por cero\033[0m");
+                return new String[]{"error", "error"};
+            }
+            return new String[]{"float", String.valueOf(val1 / val2)};
+        }
+
+        if (e[0].equals(t[0])) {
+            if (e[0].equals("int")) {
+                int val1 = Integer.parseInt(e[1]);
+                int val2 = Integer.parseInt(t[1]);
+                switch (operator) {
+                    case "+": return new String[]{"int", String.valueOf(val1 + val2)};
+                    case "-": return new String[]{"int", String.valueOf(val1 - val2)};
+                    case "*": return new String[]{"int", String.valueOf(val1 * val2)};
+                }
+            } else { // float
+                float val1 = Float.parseFloat(e[1]);
+                float val2 = Float.parseFloat(t[1]);
+                switch (operator) {
+                    case "+": return new String[]{"float", String.valueOf(val1 + val2)};
+                    case "-": return new String[]{"float", String.valueOf(val1 - val2)};
+                    case "*": return new String[]{"float", String.valueOf(val1 * val2)};
+                }
+            }
+        } else {
+            // tipos mezclados int y float convertir a float
+            float val1 = Float.parseFloat(e[1]);
+            float val2 = Float.parseFloat(t[1]);
+            switch (operator) {
+                case "+": return new String[]{"float", String.valueOf(val1 + val2)};
+                case "-": return new String[]{"float", String.valueOf(val1 - val2)};
+                case "*": return new String[]{"float", String.valueOf(val1 * val2)};
+            }
+        }
+
+        return new String[]{"", ""};
+    }
+
+    public void logArithmeticOperation(String operator, String[] e, String[] t, String[] result) {
+        if (result != null && result.length >= 2 && !result[0].isEmpty()) {
+            /*System.out.println("Operacion " + operator + " entre " +
+                             e[0] + "(" + e[1] + ") y " +
+                             t[0] + "(" + t[1] + ") = " +
+                             result[0] + "(" + result[1] + ")");
+            */
+        }
+    }
+        public void handlePrint(String text){
+            final String RESET = "\033[0m";
+            final String MORADO =  "\033[1;35m";
+            String formateado = text.toString().replaceAll("^['\"]|['\"]$", "");
+            //System.out.println(MORADO+formateado+RESET);
+        }
+
+        // Variables para manejar los casos del switch
+        public ArrayList<String> arr_case = new ArrayList<>();
+        public ArrayList<String> etiquetasCasos = new ArrayList<>();
+        public String etiquetaDefault = "";
+        public ArrayList<Object> bloquesCasos = new ArrayList<>();
+        public Object bloqueDefault = null;
+
+        // Método para procesar los casos
+        public void procesarCasos(String etiquetaSalida) {
+            // Procesar casos normales
+            for(int i = 0; i < etiquetasCasos.size(); i++) {
+                System.out.println(etiquetasCasos.get(i) + ":");
+                // Ejecutar el código del bloque del caso
+                // Aquí iría la generación de código para bloquesCasos.get(i)
+                System.out.println("goto " + etiquetaSalida);
+            }
+
+            // Procesar default si existe
+            if(etiquetaDefault != null && !etiquetaDefault.isEmpty()) {
+                System.out.println(etiquetaDefault + ":");
+                // Ejecutar el código del bloque default
+                // Aquí iría la generación de código para bloqueDefault
+            }
+        }
+:}
+
+terminal THIS,PRINT;
+
+/* Terminales palabras reservadas */
+terminal NONE, AND, OR, NOT, IS, IF, ELSE,
+        ELIF, FOR, WHILE, BREAK, CONTINUE, PASS, TRY, EXCEPT, FINALLY,
+        RAISE, ASSERT, DEF, RETURN, LAMBDA, YIELD, CLASS, IMPORT, FROM,
+        AS, DEL, GLOBAL, WITH, NONLOCAL, ASYNC, AWAIT, PACKAGE, LINE_COMMENT, IN, RANGE;
+
+terminal INDENT, DEDENT;
+
+/* Terminales operadores */
+terminal PLUS, MINUS, UMINUS , MULTIPLY, DIVIDE, EQUAL, DOUBLE_EQUAL, NOT_EQUAL,
+LESS_THAN, GREATER_THAN, LESS_EQUAL, GREATER_EQUAL, MODULE;
+
+
+/* Terminales símbolos */
+terminal DOT, SEMICOLON, COLON, COMMA, LBRACE, RBRACE, LBRACKET, RBRACKET,
+BACK_SLASH, PIPE, LPAREN, RPAREN;
+
+terminal MATCH, CASE;
+/* Terminales expresiones regulares
+    terminal IDENTIFIER, INTEGER, FLOAT, STRING, STRING_SIMPLE, CHAR;
+ */
+
+
+terminal String IDENTIFIER;
+terminal String INTEGER;
+terminal String FLOAT;
+terminal String STRING, STRING_SIMPLE;
+terminal String TRUE, FALSE;
+
+terminal CAST_INT, CAST_FLOAT, CAST_STR, CAST_BOOL;
+
+
+/* Terminales Error */
+terminal UNCLOSED_STRING, MALFORMED_NUMBER, MALFORMED_IDENTIFIER, DEFAULT;
+
+/* No terminales */
+non terminal declaraciones, bloque_importaciones,
+            bloque_variables, dec_importaciones,
+            dec_variables, dec_var_individual, dec_var_multiple, lista_identificadores, lista_valores,
+            lista_identificador_punto
+            ;
+non terminal sentencia_switch, sentencia_case,
+            lista_expresiones, incremento, impresion
+            ;
+
+non terminal estructura_control, sentencia_if, sentencia_while, sentencia_for,
+            bloque, lista_sentencias, sentencia, inicializacion, actualizfacion,
+            asignacion, bloque_estructuras, bloque_sentencias,
+            bloque_clases, clase, cuerpo_clase, dec_metodo, declaracion_variable,
+            parametros, cuerpo_metodo, parametro, dec_cuerpo_clase;
+
+non terminal casting_funcion,retorno,bloque_metodo,sentencia_metodo,sentencias_metodo;
+
+non terminal String[] dec_variables_clase,dec_var_individual_clase,dec_var_multiple_clase, valor_asignacion_clase,
+                      dec_var_individual_metodo,dec_var_multiple_metodo, dec_variables_metodo,metodo_paren
+                      ;
+non terminal String[] valor_asignacion, expresion,expresion_aritmetica, termino, factor, cadena, booleano, numero, llamada_funcion, termino_logico, expresion_logica,acceso_variable;
+
+
+non terminal programa;
+
+precedence left PLUS, MINUS;
+precedence left MULTIPLY, DIVIDE;
+precedence left UMINUS;
+
+start with programa;
+/* -------------------------- */
+/*           Programa         */
+/* -------------------------- */
+/*
+lista_expresiones ::=
+                 lista_expresiones expresion |
+                 expresion
+                 ;
+*/
+programa ::=
+        dec_importaciones bloque_clases
+        ;
+/* -------------------------- */
+/*      Importaciones         */
+/* -------------------------- */
+/* Regla para importaciones con múltiples niveles */
+dec_importaciones ::=
+   IMPORT lista_identificador_punto
+   {: //System.out.println("Es una declaracion de importacion"); :} |
+   FROM IDENTIFIER IMPORT lista_identificador_punto
+   {: //System.out.println("Es una declaracion de importacion FROM"); :} |
+   /* O nadota para importaciones ---WARNING--- a lo mejor da problemas */
+   {: //System.out.println("!!!!!!!!!!!!!!!DECLARACION DE IMPORTACION VACIA!!!!!!!!!!!!!!!"); :}
+;
+
+/* Regla auxiliar para manejar múltiples identificadores separados por DOT */
+lista_identificador_punto ::=
+   IDENTIFIER |
+   lista_identificador_punto DOT IDENTIFIER
+   ;
+/* -------------------------- */
+/* Declaracion de variables   */
+/* -------------------------- */
+/* Regla principal para declaraciones de variables */
+dec_variables ::=
+         dec_var_multiple |
+         /* O nadota para la declaracion de variables globales ---WARNING--- a lo mejor da problemas */
+    ;
+dec_variables_clase ::=
+            dec_var_multiple_clase
+        ;
+dec_variables_metodo ::=
+            dec_var_multiple_metodo
+        ;
+/* METODO */
+dec_var_individual_metodo ::= IDENTIFIER:id EQUAL valor_asignacion:valor
+{:
+    //System.out.println("Asignacion detectada en clase: " + id + " = " + valor[1]);
+    String temp = parser.generador.nuevaVariableTemporal();
+    String asignacion_temp = temp + " = " + valor[1];
+    String asignacion_var = id + " = " + temp;
+    parser.txtWriter.append(asignacion_temp+"\n"+asignacion_var);
+    System.out.println(asignacion_temp);  // Codigo intermedio
+    System.out.println(asignacion_var);        // Asignación a variable
+    //System.out.println("Varriable temporal "+ temp);
+    if (!valor[0].isEmpty()) {
+        parser.agregarVariable(id, valor[0], valor[1], "metodo");
+    } else {
+        //System.out.println("ERROR: Variable '" + id + "' no puede ser asignada porque el valor es indefinido.");
+    }
+:}
+;
+dec_var_multiple_metodo ::=
+    dec_var_individual_metodo |
+    dec_var_multiple_metodo COMMA IDENTIFIER:id EQUAL valor_asignacion:valor
+    {:
+        //System.out.println("Asignacion detectada en metodo: " + id + " = " + valor[1]);
+        parser.agregarVariable(id, valor[0], valor[1], "metodo");
+    :}
+;
+/* CLASE */
+/* Declaración individual de variable */
+dec_var_individual_clase ::= IDENTIFIER:id EQUAL valor_asignacion:valor
+{:
+    //System.out.println("Asignacion detectada en clase: " + id + " = " + valor[1]);
+    String temp = parser.generador.nuevaVariableTemporal();
+    String asignacion_temp = temp + " = " + valor[1];
+    String asignacion_var = id + " = " + temp;
+    parser.txtWriter.append(asignacion_temp+"\n"+asignacion_var);
+    System.out.println(asignacion_temp);  // Codigo intermedio
+    System.out.println(asignacion_var);        // Asignación a variable
+    //System.out.println("Varriable temporal "+ temp);
+    if (!valor[0].isEmpty()) {
+        parser.agregarVariable(id, valor[0], valor[1], "clase");
+    } else {
+        //System.out.println("ERROR: Variable '" + id + "' no puede ser asignada porque el valor es indefinido.");
+    }
+:}
+;
+dec_var_multiple_clase ::=
+    dec_var_individual_clase |
+    dec_var_multiple_clase COMMA IDENTIFIER:id EQUAL valor_asignacion:valor
+    {:
+        //System.out.println("Asignacion detectada en clase: " + id + " = " + valor[1]);
+        parser.agregarVariable(id, valor[0], valor[1], "clase");
+    :}
+;
+
+/* GLOBAL */
+/* Declaración individual de variable */
+dec_var_individual ::= IDENTIFIER:id EQUAL valor_asignacion:valor
+{:
+    //System.out.println("Asignacion detectada: " + id + " = " + valor[1]);
+    if (!valor[0].isEmpty()) {
+        parser.agregarVariable(id, valor[0], valor[1], "global");
+    } else {
+        //System.out.println("ERROR: Variable '" + id + "' no puede ser asignada porque el valor es indefinido.");
+    }
+:}
+;
+
+/* Declaración múltiple de variables con asignación */
+dec_var_multiple ::=
+    dec_var_individual |
+    dec_var_multiple COMMA IDENTIFIER:id EQUAL valor_asignacion:valor
+    {:
+        //System.out.println("Asignacion detectada: " + id + " = " + valor[1]);
+        parser.agregarVariable(id, valor[0], valor[1], "global");
+    :}
+;
+
+/* valores de asignaciones, EXPRESION ARTIMETICA CUBRE NUMERO E IDENTIFICADOR*/
+valor_asignacion ::=
+    expresion_aritmetica:e {: RESULT = e; :} |
+    expresion_logica: e {: RESULT = e; :} |
+    cadena:c {: RESULT = c; :} |
+    llamada_funcion:f {: RESULT = f;:}
+    ;
+
+/* -------------------------- */
+/*  Estructuras de control    */
+/* -------------------------- */
+estructura_control ::=
+    sentencia_if |
+    sentencia_while |
+    sentencia_for |
+    sentencia_switch
+    ;
+
+sentencia_switch ::=
+    MATCH valor_asignacion:e COLON INDENT sentencia_case:cases DEDENT
+    {:
+        // Generación de código intermedio para switch
+        String temp = parser.generador.nuevaVariableTemporal();
+        String etiquetaSalida = parser.generador.nuevaEtiqueta();
+
+        // Almacenar el valor a comparar en temporal
+        System.out.println(temp + " = " + e[1] + "  # Almacenar valor de switch");
+
+        // Primero generar todos los casos normales (no default)
+        boolean tieneDefault = false;
+        for(int i = 0; i < parser.arr_case.size(); i++) {
+            String caso = parser.arr_case.get(i);
+            if(!caso.equals("_")) {  // "_" representa el caso default
+                String etiquetaCaso = parser.generador.nuevaEtiqueta();
+                parser.etiquetasCasos.add(etiquetaCaso);
+                System.out.println("if " + temp + " == " + caso + " goto " + etiquetaCaso);
+            } else {
+                tieneDefault = true;
+                parser.etiquetaDefault = parser.generador.nuevaEtiqueta();
+            }
+        }
+
+        // Manejar el caso default
+        if(tieneDefault) {
+            System.out.println("goto " + parser.etiquetaDefault);
+        } else {
+            System.out.println("goto " + etiquetaSalida);
+        }
+
+        // Procesar las etiquetas generadas para los casos
+        parser.procesarCasos(etiquetaSalida);
+
+        // Etiqueta de salida
+        System.out.println(etiquetaSalida + ":");
+
+        // Limpiar variables para el próximo switch
+        parser.arr_case.clear();
+        parser.etiquetasCasos.clear();
+        parser.etiquetaDefault = "";
+        parser.bloquesCasos.clear();
+        parser.bloqueDefault = null;
+    :}
+    ;
+
+sentencia_case ::=
+    CASE valor_asignacion:e COLON INDENT bloque:bloque_caso DEDENT
+    {:
+        if(e != null){
+            // Registrar el caso y su bloque
+            parser.arr_case.add(e[1]);
+        } else {
+            System.out.println("Sentencia CASE no válida");
+        }
+    :}
+|   sentencia_case CASE DEFAULT COLON INDENT bloque:bloque_default DEDENT
+    {:
+        // Registrar el caso default (_)
+        parser.arr_case.add("_");
+    :}
+|   sentencia_case CASE valor_asignacion:e COLON INDENT bloque:bloque_caso DEDENT
+    {:
+        if(e != null){
+            // Registrar el caso y su bloque
+            parser.arr_case.add(e[1]);
+        } else {
+            System.out.println("Sentencia CASE no válida");
+        }
+    :}
+;
+sentencia_if ::=
+    IF expresion_logica:el COLON INDENT bloque:if_bloque DEDENT ELSE COLON INDENT bloque:else_bloque DEDENT
+    {:
+        // Generación de código intermedio para if-else
+        String temp = parser.generador.nuevaVariableTemporal();
+        String etiquetaTrue = parser.generador.nuevaEtiqueta();
+        String etiquetaFalse = parser.generador.nuevaEtiqueta();
+        String etiquetaSalida = parser.generador.nuevaEtiqueta();
+
+        // Generar comparación
+        System.out.println(temp + " = " + el[1] + "  # Evaluación de condición");
+        System.out.println("if " + temp + " goto " + etiquetaTrue);
+        System.out.println("goto " + etiquetaFalse);
+
+        // Bloque if
+        System.out.println(etiquetaTrue + ":");
+        // Aquí iría el código del bloque if (if_bloque)
+
+        System.out.println("goto " + etiquetaSalida);
+
+        // Bloque else
+        System.out.println(etiquetaFalse + ":");
+        // Aquí iría el código del bloque else (else_bloque)
+
+        System.out.println(etiquetaSalida + ":");
+    :} |
+    IF expresion_logica:el COLON INDENT bloque:if_bloque DEDENT
+    {:
+        // Generación de código intermedio para if sin else
+        String temp = parser.generador.nuevaVariableTemporal();
+        String etiquetaTrue = parser.generador.nuevaEtiqueta();
+        String etiquetaSalida = parser.generador.nuevaEtiqueta();
+
+        System.out.println(temp + " = " + el[1]);
+        System.out.println("if " + temp + " goto " + etiquetaTrue);
+        System.out.println("goto " + etiquetaSalida);
+
+        // Bloque if
+        System.out.println(etiquetaTrue + ":");
+        // Aquí iría el código del bloque if (if_bloque)
+
+        System.out.println(etiquetaSalida + ":");
+    :}
+    ;
+
+sentencia_while ::=
+    WHILE expresion_logica:el COLON INDENT bloque DEDENT
+    {:
+        //System.out.println("=============SENTENCIA WHILE valida=============");
+        if (el[1].toString().equals("True")) {
+            //System.out.println("THE WHILE GATE");
+            //System.out.println("THATS ME BABY "+el[1].toString());
+            //System.out.println("\033[33mWHILE ---> VERDADERO: EJECUCION DE WHILE\033[0m");
+        } else {
+            //System.out.println("THE WHILE GATE");
+            //System.out.println("THATS ME BABY "+el[1].toString());
+            //System.out.println("\033[33mWHILE ---> FALSO: NO SE EJECUTA\033[0m");
+        }
+    :} |
+    WHILE expresion_logica COLON error
+    {:
+        //System.out.println("\033[1;31mERROR: Se esperaba un INDENT despues de WHILE\033[0m");
+    :} |
+    WHILE error COLON INDENT bloque DEDENT
+    {:
+        //System.out.println("\033[1;31m=============SENTENCIA WHILE invalida se esperaba una expresion logica=============");
+    :}
+;
+
+sentencia_for ::=
+    FOR IDENTIFIER IN RANGE LPAREN numero:n RPAREN COLON INDENT bloque DEDENT
+    {:
+        //System.out.println("=============SENTENCIA FOR valida=============");
+        //System.out.println("\033[33mFOR ---> EJECUCION DEL BUCLE FOR "+n[1]+" veces\033[0m");
+    :} |
+    FOR IDENTIFIER IN RANGE LPAREN numero RPAREN COLON error
+    {:
+        //System.out.println("\033[1;31mERROR: Se esperaba un INDENT despues de FOR\033[0m");
+    :} |
+    FOR IDENTIFIER IN RANGE LPAREN numero RPAREN COLON INDENT error DEDENT
+    {:
+        //System.out.println("\033[1;31mERROR: Se esperaba un bloque valido después de FOR\033[0m");
+    :} |
+    FOR error COLON INDENT bloque DEDENT
+    {:
+        //System.out.println("\033[1;31m=============SENTENCIA FOR invalida se esperaba una estructura valida=============");
+    :} |
+    FOR error COLON INDENT bloque DEDENT ELSE COLON INDENT bloque DEDENT
+    {:
+        //System.out.println("\033[1;31m=============SENTENCIA FOR ELSE invalida se esperaba una estructura valida=============");
+    :}
+;
+
+bloque ::=
+    lista_sentencias
+    {: //System.out.println("Bloque con sentencias"); :}
+    ;
+
+lista_sentencias ::=
+    sentencia |
+    lista_sentencias sentencia
+    ;
+
+sentencia ::=
+    dec_variables_metodo
+    {: //System.out.println("Sentencia de declaracion en metodo"); :} |
+    /*Se borraron las expresiones por que daban error en la declaracion de variables y metodos*/
+    estructura_control
+    {: //System.out.println("Sentencia de control"); :} |
+    impresion
+    ;
+impresion ::=     PRINT LPAREN cadena:c RPAREN
+                  {: parser.handlePrint(c[1]); :}
+                  ;
+
+/* -------------------------- */
+/*      Clases y metodos      */
+/* -------------------------- */
+bloque_clases::= clase |
+                 bloque_clases clase
+                 ;
+
+clase::= CLASS IDENTIFIER COLON INDENT cuerpo_clase DEDENT
+         {: //System.out.println("=============DEFINICION DE CLASE============="); :} |
+         CLASS error COLON
+         {: //System.out.println("=============ERROR: Clase se esperaba un identificador============="); :} |
+         CLASS IDENTIFIER COLON error
+         {: //System.out.println("=============ERROR: Se esperaba un INDENT despues de CLASS============="); :}
+         ;
+
+cuerpo_clase::= dec_cuerpo_clase |
+                cuerpo_clase dec_cuerpo_clase
+               ;
+
+dec_cuerpo_clase::=
+                    dec_variables_clase |
+                    dec_metodo |
+                    estructura_control
+                    ;
+retorno ::=
+    RETURN expresion:e
+    {:
+        //System.out.println("\u001B[1;35mRetorno de metodo"+"\u001B[0m");
+        RESULT = e; // Pasar el tipo y valor de retorno
+    :} |
+        /*RETORNO OPCIONAL*/
+        ;
+bloque_metodo ::=
+        sentencias_metodo retorno |
+        retorno/*BLOQUE METODO OPCIONAL PARA RETURN SOLO*/
+    ;
+
+sentencias_metodo ::=
+        sentencia_metodo |
+        sentencias_metodo sentencia_metodo
+    ;
+
+sentencia_metodo ::=
+    dec_variables_metodo
+    {: //System.out.println("Sentencia de declaracion en metodo"); :} |
+    /*Se borraron las expresiones por que daban error en la declaracion de variables y metodos*/
+    estructura_control
+    {: //System.out.println("Sentencia de control"); :}|
+    impresion
+    ;
+
+dec_metodo ::=
+    DEF IDENTIFIER:func LPAREN parametros:param RPAREN COLON INDENT bloque_metodo DEDENT
+    {:
+     //System.out.println("\033[1;35mMetodo:"+func.toString()+" Parametros:"+param.toString()+"\033[0m");
+     parser.agregarMetodo(func.toString(), param.toString(), "int", "metodo");
+    :}
+    |
+    DEF IDENTIFIER:func LPAREN RPAREN COLON INDENT bloque_metodo DEDENT
+    {:
+    //System.out.println("=============DEFINICION DE METODO SIN PARAMETROS=============");
+    parser.agregarMetodo(func.toString(), "", "int", "metodo");
+    //System.out.println("\033[1;35mMetodo:"+func.toString()+"\033[0");
+    :}
+    |
+    DEF IDENTIFIER:func LPAREN RPAREN COLON INDENT PASS DEDENT
+    {:
+    parser.agregarVariable(func.toString(), "int", "1", "dec_metodo");
+    parser.agregarMetodo(func.toString(), "", "int", "metodo");
+    //System.out.println("=============DEFINICION DE METODO SIN PARAMETROS VACIO=============");
+    :}
+    |
+    DEF IDENTIFIER:func LPAREN parametros:param RPAREN COLON INDENT PASS DEDENT
+    {:
+    //System.out.println("=============DEFINICION DE METODO VACIO=============");
+    parser.agregarMetodo(func.toString(), param.toString(), "int", "metodo");
+    //System.out.println("\033[1;35mMetodo:"+func.toString()+" Parametros:"+param.toString()+"\033[0m");
+    :}
+    ;
+
+parametros ::=
+    parametro:param
+    {: RESULT = (String) param; :}
+    |
+    parametros:params COMMA parametro:param
+    {:
+        RESULT = params + "," + param;
+    :}
+    |
+    parametros error:e
+    {: //System.out.println("ERROR: DEFINICION DE METODO: Se esperaban parametros y se obtuvo"+e); :}
+    ;
+
+parametro::= IDENTIFIER:param {: RESULT = new String(param); :}
+             ;
+/* -------------------------- */
+        /* EXPRESIONES */
+/* -------------------------- */
+expresion ::=
+   expresion_aritmetica:ea {: RESULT = ea; //System.out.println("Es una expresion aritmetica"); :} |
+   expresion_logica:el {: RESULT = el; //System.out.println("Es una expresion logica"); :} |
+   llamada_funcion:f {:RESULT = f; //System.out.println("Es una expresion que llama una FUNCION"); :}
+   ;
+
+llamada_funcion ::=
+   //IDENTIFIER LPAREN lista_expresiones RPAREN |
+   casting_funcion:castType LPAREN expresion:exp RPAREN
+   {:
+       if (exp != null) {
+           String[] resultado = parser.realizarCasting((String)castType, (String[])exp);
+           if (resultado[0].isEmpty()) {
+               //System.out.println("\033[31m"+"Error: No se pudo realizar el casting de " + exp[1] + " a " + castType + "\033[0m");
+           } else {
+               //System.out.println("Casting realizado: " + exp[1] + " -> " + resultado[1] + " (" + resultado[0] + ")");
+           }
+           RESULT = resultado;
+       } else {
+           RESULT = new String[]{"", ""};
+       }
+   :}
+;
+casting_funcion ::=
+   CAST_INT {: RESULT = "int"; :} |
+   CAST_FLOAT {: RESULT = "float"; :} |
+   CAST_STR {: RESULT = "str"; :} |
+   CAST_BOOL {: RESULT = "bool"; :}
+;
+
+// Regla base para acceso a variables (compartida con decaracion de metodo)
+acceso_variable ::=
+   IDENTIFIER:id
+   {:
+            if(parser.tabla.verificar(id)) {
+                Simbolo s = parser.tabla.obtenerSimbolo(id);
+                RESULT = new String[]{s.getTipo(), s.getValor()};
+            } else {
+                //System.out.println("Error: Variable '"+id+"' no definida");
+                RESULT = new String[]{"", ""};
+            }
+   :} |
+      IDENTIFIER:id metodo_paren:params
+      {:
+               if(parser.tabla.verificar(id)) {
+                   Simbolo s = parser.tabla.obtenerSimbolo(id);
+                   int num_params_meth = parser.tabla.obtenerNumeroParametros(id);
+                   String[] parametros = params[1].split(",");
+                   int num_params_meth_call= parametros.length;
+                   if(num_params_meth!=num_params_meth_call){
+                        RESULT = new String[]{s.getTipo(), s.getValor()}; // PROBLEMA: WILL LEAD TO ERRORS
+                        //System.out.println("\033[31mERROR: NUMERO DE PARAMETROS NO COINCIDE CON METODO");
+                   }
+                   //System.out.println("\033[36mMetodo " +id+ " agregado a variable\033[0m");
+                   RESULT = new String[]{s.getTipo(), s.getValor()};
+               } else {
+                   //System.out.println("Error: Variable '"+id+"' no definida");
+                   RESULT = new String[]{"", ""};
+               }
+      :}
+   ;
+metodo_paren ::=
+    LPAREN RPAREN {: RESULT = new String[]{"param", "vacio"};:} |
+    LPAREN parametros:p RPAREN {: RESULT = new String[]{"param", p.toString()};:}
+    ;
+expresion_aritmetica ::=
+   termino:t {: RESULT = t; :} |
+   expresion_aritmetica:e PLUS termino:t
+   {:
+      String[] res = parser.handleArithmeticOperation(e, t, "+");
+      String temp = parser.generador.nuevaVariableTemporal();
+      System.out.println(temp + " = " + e[1] + " + " + t[1]);
+      RESULT = new String[]{res[0], res[1]};
+      parser.logArithmeticOperation("suma", e, t, (String[])RESULT);
+   :} |
+   expresion_aritmetica:e MINUS termino:t
+   {:
+      String[] res = parser.handleArithmeticOperation(e, t, "-");
+      String temp = parser.generador.nuevaVariableTemporal();
+      System.out.println(temp + " = " + e[1] + " - " + t[1]);
+      RESULT = new String[]{res[0], res[1]};
+      parser.logArithmeticOperation("resta", e, t, (String[])RESULT);
+   :}
+   ;
+
+termino ::=
+   factor:f {: RESULT = f; :} |
+   termino:e MULTIPLY factor:t
+   {:
+      String[] res = parser.handleArithmeticOperation(e, t, "*");
+      String temp = parser.generador.nuevaVariableTemporal();
+      System.out.println(temp + " = " + e[1] + " * " + t[1]);
+      RESULT = new String[]{res[0], res[1]};
+      parser.logArithmeticOperation("multiplicacion", e, t, (String[])RESULT);
+   :} |
+   termino:e DIVIDE factor:t
+   {:
+      String[] res = parser.handleArithmeticOperation(e, t, "/");
+      String temp = parser.generador.nuevaVariableTemporal();
+      System.out.println(temp + " = " + e[1] + " / " + t[1]);
+      RESULT = new String[]{res[0], res[1]};
+      parser.logArithmeticOperation("division", e, t, (String[])RESULT);
+   :}
+   ;
+
+factor ::=
+   acceso_variable:v  {: RESULT = v; :} |
+   MINUS factor:f
+   {:
+        boolean isInt = f instanceof String[] && ((String[])f)[0].equals("int");
+        boolean isFloat = f instanceof String[] && ((String[])f)[0].equals("float");
+       if (isInt || isFloat) {
+           try {
+                if (isInt){
+                    int val = Integer.parseInt(((String[])f)[1]);
+                    RESULT = new String[]{"int", String.valueOf(-val)};
+                }else{
+                    float val = Float.parseFloat(((String[])f)[1]);
+                    RESULT = new String[]{"float", String.valueOf(-val)};
+                }
+           } catch (NumberFormatException e) {
+               RESULT = new String[]{"error", "Invalid number format"};
+           }
+       } else {
+           //System.out.println("Error: Cannot apply unary minus to non-numeric value");
+           //RESULT = new String[]{"error", "Invalid operand for unary minus"};
+       }
+   :} %prec UMINUS
+   |
+   numero:n {: RESULT = n; :}
+   |
+   LPAREN expresion_aritmetica:e RPAREN {: RESULT = e; :}
+   ;
+
+expresion_logica ::=
+    termino_logico:tl {: RESULT = tl; :} |
+    expresion_logica:el AND termino_logico:tl
+    {:
+        RESULT = parser.handleLogicalOperation(el, tl, "AND");
+    :} |
+    expresion_logica:el OR termino_logico:tl
+    {:
+        RESULT = parser.handleLogicalOperation(el, tl, "OR");
+    :} |
+    expresion_logica AND error
+    {: parser.handleLogicalError("AND"); RESULT = new String[]{"", ""}; :} |
+    expresion_logica OR error
+    {: parser.handleLogicalError("OR"); RESULT = new String[]{"", ""}; :}
+    ;
+
+termino_logico ::=
+   booleano:b {: RESULT = b; :} |
+   expresion_aritmetica:e1 DOUBLE_EQUAL expresion_aritmetica:e2
+   {: RESULT = parser.handleComparison(e1, e2, "=="); :} |
+
+   expresion_aritmetica:e1 NOT_EQUAL expresion_aritmetica:e2
+   {: RESULT = parser.handleComparison(e1, e2, "!="); :} |
+
+   expresion_aritmetica:e1 GREATER_THAN expresion_aritmetica:e2
+   {: RESULT = parser.handleComparison(e1, e2, ">"); :} |
+
+   expresion_aritmetica:e1 LESS_THAN expresion_aritmetica:e2
+   {: RESULT = parser.handleComparison(e1, e2, "<"); :} |
+
+   expresion_aritmetica:e1 GREATER_EQUAL expresion_aritmetica:e2
+   {: RESULT = parser.handleComparison(e1, e2, ">="); :} |
+
+   expresion_aritmetica:e1 LESS_EQUAL expresion_aritmetica:e2
+   {: RESULT = parser.handleComparison(e1, e2, "<="); :} |
+
+   NOT termino_logico:tl
+   {: RESULT = parser.handleNotOperation(tl); :} |
+
+   LPAREN expresion_logica:el RPAREN {: RESULT = el; :} |
+   expresion_aritmetica DOUBLE_EQUAL error {: //System.out.println("TERMINO LOGICO->Comparacion de igualdad, ERROR: Se esperaba una expresion aritmetica"); :} |
+   expresion_aritmetica NOT_EQUAL error {: //System.out.println("TERMINO LOGICO->Comparacion de desigualdad, ERROR: Se esperaba una expresion aritmetica"); :} |
+   expresion_aritmetica GREATER_THAN error {: //System.out.println("TERMINO LOGICO->Comparacion de mayor que, ERROR: Se esperaba una expresion aritmetica"); :} |
+   expresion_aritmetica LESS_THAN error {: //System.out.println("TERMINO LOGICO->Comparacion de menor que, ERROR: Se esperaba una expresion aritmetica"); :} |
+   expresion_aritmetica GREATER_EQUAL error {: //System.out.println("TERMINO LOGICO->Comparacion de mayor o igual, ERROR: Se esperaba una expresion aritmetica"); :} |
+   expresion_aritmetica LESS_EQUAL error {: //System.out.println("TERMINO LOGICO->Comparacion de menor o igual, ERROR: Se esperaba una expresion aritmetica"); :}
+   ;
+
+/*HELPERS*/
+numero ::=
+   INTEGER : str
+   {:
+        //System.out.println("Tipo: entero");
+        RESULT = new String[]{"int",str.toString()};
+   :} |
+   FLOAT : str
+   {:
+        //System.out.println("Tipo: float");
+        RESULT = new String[]{"float",str.toString()};
+   :}
+   ;
+
+cadena ::=
+   STRING : str
+      {:
+           //System.out.println("Tipo: cadena");
+           RESULT = new String[]{"string",str.toString()};
+      :} |
+   STRING_SIMPLE : str
+      {:
+           //System.out.println("Tipo: cadena simple");
+           RESULT = new String[]{"string",str.toString()};
+      :}
+   ;
+
+booleano ::=
+       TRUE : str
+             {:
+                //System.out.println("Tipo: Booleano True");
+                RESULT = new String[]{"boolean",str.toString()};
+             :} |
+       FALSE : str
+            {:
+                //System.out.println("Tipo: Booleano False");
+                RESULT = new String[]{"boolean",str.toString()};
+            :}
+;
