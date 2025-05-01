@@ -1,6 +1,19 @@
 import algo
 
 class Main:
+    a = 1
+    b = 2
+    if b>a:
+        c =10
+    else:
+        c = -10
+
+    for i in range(5):
+        x = 2
+
+    while True:
+        z = 2+1
+
     day = 4
     match day:
       case 1:
@@ -9,6 +22,4 @@ class Main:
         j = 1
       case 3:
         j = 1
-      case _:
-        e = 2
 

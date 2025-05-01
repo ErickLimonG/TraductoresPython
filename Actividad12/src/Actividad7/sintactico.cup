@@ -615,7 +615,7 @@ sentencia_if ::=
         String etiquetaSalida = parser.generador.nuevaEtiqueta();
 
         // Generar comparación
-        System.out.println(temp + " = " + el[1] + "  # Evaluación de condición");
+        System.out.println(temp + " = " + el[1]); // # Evaluación de condición
         System.out.println("if " + temp + " goto " + etiquetaTrue);
         System.out.println("goto " + etiquetaFalse);
 
@@ -651,50 +651,89 @@ sentencia_if ::=
     ;
 
 sentencia_while ::=
-    WHILE expresion_logica:el COLON INDENT bloque DEDENT
+    WHILE expresion_logica:el COLON INDENT bloque:while_bloque DEDENT
     {:
-        //System.out.println("=============SENTENCIA WHILE valida=============");
-        if (el[1].toString().equals("True")) {
-            //System.out.println("THE WHILE GATE");
-            //System.out.println("THATS ME BABY "+el[1].toString());
-            //System.out.println("\033[33mWHILE ---> VERDADERO: EJECUCION DE WHILE\033[0m");
-        } else {
-            //System.out.println("THE WHILE GATE");
-            //System.out.println("THATS ME BABY "+el[1].toString());
-            //System.out.println("\033[33mWHILE ---> FALSO: NO SE EJECUTA\033[0m");
-        }
+        // Generación de código intermedio para while
+        String temp = parser.generador.nuevaVariableTemporal();
+        String etiquetaInicio = parser.generador.nuevaEtiqueta();
+        String etiquetaCuerpo = parser.generador.nuevaEtiqueta();
+        String etiquetaSalida = parser.generador.nuevaEtiqueta();
+
+        // Etiqueta de inicio del bucle
+        System.out.println(etiquetaInicio + ":  "); //# Etiqueta de inicio del bucle while
+
+        // Evaluar condición
+        System.out.println(temp + " = " + el[1] + "  "); //# Evaluación de condición del while
+        System.out.println("if " + temp + " goto " + etiquetaCuerpo);
+        System.out.println("goto " + etiquetaSalida);
+
+        // Cuerpo del while
+        System.out.println(etiquetaCuerpo + ":  "); //# Inicio del cuerpo del while
+        // Aquí iría el código del bloque while (while_bloque)
+
+        // Volver a evaluar la condición
+        System.out.println("goto " + etiquetaInicio);
+
+        // Salida del bucle
+        System.out.println(etiquetaSalida + ":  "); // # Fin del bucle while
     :} |
     WHILE expresion_logica COLON error
     {:
-        //System.out.println("\033[1;31mERROR: Se esperaba un INDENT despues de WHILE\033[0m");
+        System.out.println("\033[1;31mERROR: Se esperaba un INDENT después de WHILE\033[0m");
     :} |
     WHILE error COLON INDENT bloque DEDENT
     {:
-        //System.out.println("\033[1;31m=============SENTENCIA WHILE invalida se esperaba una expresion logica=============");
+        System.out.println("\033[1;31mERROR: Se esperaba una expresión lógica después de WHILE\033[0m");
     :}
 ;
-
 sentencia_for ::=
-    FOR IDENTIFIER IN RANGE LPAREN numero:n RPAREN COLON INDENT bloque DEDENT
+    FOR IDENTIFIER:va IN RANGE LPAREN numero:n RPAREN COLON INDENT bloque:for_bloque DEDENT
     {:
-        //System.out.println("=============SENTENCIA FOR valida=============");
-        //System.out.println("\033[33mFOR ---> EJECUCION DEL BUCLE FOR "+n[1]+" veces\033[0m");
+        // Generación de código intermedio para for
+        String tempCond = parser.generador.nuevaVariableTemporal();
+        String etiquetaInicio = parser.generador.nuevaEtiqueta();
+        String etiquetaCuerpo = parser.generador.nuevaEtiqueta();
+        String etiquetaSalida = parser.generador.nuevaEtiqueta();
+
+        // Inicialización de la variable de control
+        System.out.println(va + " = 0  "); // # Inicialización del bucle for
+
+        // Etiqueta de inicio del bucle
+        System.out.println(etiquetaInicio + ":  "); // # Inicio del bucle for
+
+        // Evaluación de condición
+        System.out.println(tempCond + " = " + va + " < " + n[1] + " "); //  # Condición del for
+        System.out.println("if " + tempCond + " goto " + etiquetaCuerpo);
+        System.out.println("goto " + etiquetaSalida);
+
+        // Cuerpo del for
+        System.out.println(etiquetaCuerpo + ":  "); // # Cuerpo del bucle for
+        // Aquí iría el código del bloque for (for_bloque)
+
+        // Incremento
+        System.out.println(va + " = " + va + " + 1 "); //  # Incremento de la variable de control
+
+        // Volver a evaluar la condición
+        System.out.println("goto " + etiquetaInicio);
+
+        // Salida del bucle
+        System.out.println(etiquetaSalida + ": "); //  # Fin del bucle for
     :} |
     FOR IDENTIFIER IN RANGE LPAREN numero RPAREN COLON error
     {:
-        //System.out.println("\033[1;31mERROR: Se esperaba un INDENT despues de FOR\033[0m");
+        System.out.println("\033[1;31mERROR: Se esperaba un INDENT después de FOR\033[0m");
     :} |
     FOR IDENTIFIER IN RANGE LPAREN numero RPAREN COLON INDENT error DEDENT
     {:
-        //System.out.println("\033[1;31mERROR: Se esperaba un bloque valido después de FOR\033[0m");
+        System.out.println("\033[1;31mERROR: Se esperaba un bloque válido después de FOR\033[0m");
     :} |
     FOR error COLON INDENT bloque DEDENT
     {:
-        //System.out.println("\033[1;31m=============SENTENCIA FOR invalida se esperaba una estructura valida=============");
+        System.out.println("\033[1;31mERROR: Se esperaba una estructura válida para FOR\033[0m");
     :} |
     FOR error COLON INDENT bloque DEDENT ELSE COLON INDENT bloque DEDENT
     {:
-        //System.out.println("\033[1;31m=============SENTENCIA FOR ELSE invalida se esperaba una estructura valida=============");
+        System.out.println("\033[1;31mERROR: Se esperaba una estructura válida para FOR-ELSE\033[0m");
     :}
 ;
 
