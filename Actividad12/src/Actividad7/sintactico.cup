@@ -490,6 +490,13 @@ dec_var_multiple_clase ::=
     dec_var_multiple_clase COMMA IDENTIFIER:id EQUAL valor_asignacion:valor
     {:
         //System.out.println("Asignacion detectada en clase: " + id + " = " + valor[1]);
+        String temp = parser.generador.nuevaVariableTemporal();
+        String asignacion_temp = temp + " = " + valor[1];
+        String asignacion_var = id + " = " + temp;
+        parser.txtWriter.append(asignacion_temp+"\n"+asignacion_var);
+        System.out.println(asignacion_temp);  // Codigo intermedio
+        System.out.println(asignacion_var);        // Asignación a variable
+        //System.out.println("Asignacion detectada en clase: " + id + " = " + valor[1]);
         parser.agregarVariable(id, valor[0], valor[1], "clase");
     :}
 ;
