@@ -321,6 +321,7 @@ parser code{:
             // Procesar default si existe
             if(etiquetaDefault != null && !etiquetaDefault.isEmpty()) {
                 System.out.println(etiquetaDefault + ":");
+                System.out.println("goto " + etiquetaSalida);
                 // Ejecutar el código del bloque default
                 // Aquí iría la generación de código para bloqueDefault
             }
