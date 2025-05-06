@@ -542,7 +542,7 @@ sentencia_switch ::=
         String etiquetaSalida = parser.generador.nuevaEtiqueta();
 
         // Almacenar el valor a comparar en temporal
-        System.out.println(temp + " = " + e[1] + "  # Almacenar valor de switch");
+        System.out.println(temp + " = " + e[1] ); //  # Almacenar valor de switch
 
         // Primero generar todos los casos normales (no default)
         boolean tieneDefault = false;

@@ -3,6 +3,7 @@ import algo
 class Main:
     a = 1
     b = 2
+
     if b>a:
         c =10
     else:
@@ -22,4 +23,5 @@ class Main:
         j = 1
       case 3:
         j = 1
-
+      case _:
+        j=2

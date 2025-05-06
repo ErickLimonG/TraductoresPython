@@ -69,7 +69,6 @@ import java.util.Stack;
 }
 
 /* Palabras reservadas */
-"_" { return symbol(sym.DEFAULT, yytext()); }
 "match" { return symbol(sym.MATCH, yytext()); }
 "case" { return symbol(sym.CASE, yytext()); }
 "range" { return symbol(sym.RANGE, yytext()); }
@@ -110,6 +109,7 @@ import java.util.Stack;
 /* Comentario */
 "#".* { /*//System.out.println(("LINE_COMMENT=" + yytext());*/ }
 
+"_" { return symbol(sym.DEFAULT, yytext()); }
 /* Identificador */
 [a-zA-Z_][a-zA-Z0-9_]* { return symbol(sym.IDENTIFIER, yytext()); }
 
