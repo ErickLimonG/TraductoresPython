@@ -559,7 +559,9 @@ sentencia_switch ::=
             if(!caso.equals("_")) {  // "_" representa el caso default
                 String etiquetaCaso = parser.generador.nuevaEtiqueta();
                 parser.etiquetasCasos.add(etiquetaCaso);
-                System.out.println("if " + temp + " == " + caso + " goto " + etiquetaCaso);
+                String caso_normal = "if " + temp + " == " + caso + " goto " + etiquetaCaso;
+                System.out.println(caso_normal);
+                parser.txtWriter.append(caso_normal);
             } else {
                 tieneDefault = true;
                 parser.etiquetaDefault = parser.generador.nuevaEtiqueta();
@@ -569,6 +571,8 @@ sentencia_switch ::=
         // Manejar el caso default
         if(tieneDefault) {
             System.out.println("goto " + parser.etiquetaDefault);
+            String caso_default = "goto " + parser.etiquetaDefault;
+            parser.txtWriter.append(caso_default);
         } else {
             System.out.println("goto " + etiquetaSalida);
         }
@@ -577,7 +581,8 @@ sentencia_switch ::=
         parser.procesarCasos(etiquetaSalida);
 
         // Etiqueta de salida
-        System.out.println(etiquetaSalida + ":");
+        String etiqueta_salida = etiquetaSalida + ":\n"+"goto " + etiquetaSalida;
+        parser.txtWriter.append(etiqueta_salida);
 
         // Limpiar variables para el próximo switch
         parser.arr_case.clear();
@@ -623,21 +628,23 @@ sentencia_if ::=
         String etiquetaSalida = parser.generador.nuevaEtiqueta();
 
         // Generar comparación
-        System.out.println(temp + " = " + el[1]); // # Evaluación de condición
-        System.out.println("if " + temp + " goto " + etiquetaTrue);
-        System.out.println("goto " + etiquetaFalse);
-
+        String comparacion = temp + " = " + el[1] + "\n"+"if " + temp + " goto " + etiquetaTrue +"\ngoto " + etiquetaFalse;
+        System.out.println(comparacion);
+        parser.txtWriter.append(comparacion);
         // Bloque if
         System.out.println(etiquetaTrue + ":");
+        parser.txtWriter.append(etiquetaTrue + ":");
         // Aquí iría el código del bloque if (if_bloque)
 
         System.out.println("goto " + etiquetaSalida);
-
+        parser.txtWriter.append("goto " + etiquetaSalida);
         // Bloque else
         System.out.println(etiquetaFalse + ":");
+        parser.txtWriter.append(etiquetaFalse + ":");
         // Aquí iría el código del bloque else (else_bloque)
 
         System.out.println(etiquetaSalida + ":");
+        parser.txtWriter.append(etiquetaSalida + ":");
     :} |
     IF expresion_logica:el COLON INDENT bloque:if_bloque DEDENT
     {:
@@ -645,16 +652,15 @@ sentencia_if ::=
         String temp = parser.generador.nuevaVariableTemporal();
         String etiquetaTrue = parser.generador.nuevaEtiqueta();
         String etiquetaSalida = parser.generador.nuevaEtiqueta();
-
-        System.out.println(temp + " = " + el[1]);
-        System.out.println("if " + temp + " goto " + etiquetaTrue);
-        System.out.println("goto " + etiquetaSalida);
-
+        String comparacion = temp + " = " + el[1] + "\n"+"if " + temp + " goto " + etiquetaTrue +"\ngoto " + etiquetaSalida;
+        System.out.println(comparacion);
+        parser.txtWriter.append(comparacion);
         // Bloque if
         System.out.println(etiquetaTrue + ":");
+        parser.txtWriter.append(etiquetaTrue + ":");
         // Aquí iría el código del bloque if (if_bloque)
-
         System.out.println(etiquetaSalida + ":");
+        parser.txtWriter.append(etiquetaSalida + ":");
     :}
     ;
 
