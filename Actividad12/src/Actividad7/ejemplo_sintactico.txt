@@ -1,26 +1,56 @@
-import algo
+import pepito
 
-class Main:
-    a = 1,b = 2
+class main:
+    # Comparador de 3 números: código que indique cual es el mayor, el menor y el medio de 3 cantidades; 
+    # (los números deben de estar definidos no es necesario capturar; usen if's).
+    a = 1, b = 2, c = 3
+    mayor = 0, medio = 0, menor = 0
 
-    if b>a:
-        c =10
+    # Determinamos el mayor
+    if a >= b and a >= c:
+        mayor = a
+    if b >= a and b >= c:
+        mayor = b
     else:
-        c = -10
+        mayor = c
 
-    for i in range(5):
-        x = 2
+    # Determinamos el menor
+    if a <= b and a <= c:
+        menor = a
+    if b <= a and b <= c:
+        menor = b
+    else:
+        menor = c
 
-    while True:
-        z = 2+1
+    # Determinamos el medio
+    if (a != mayor and a != menor):
+        medio = a
+    if (b != mayor and b != menor):
+        medio = b
+    else:
+        medio = c
 
+    # Sumatoria: código que que sume los valores del 1 al 10. (usen un ciclo).
+    for i in range(10):
+        sum = sum + i
+
+    # Dia de la semana: código que al asignar un numero del 1 al 7 determine que día de la semana es. 
+    # (el número debe de estar definido no es necesario capturar; usen switch).
     day = 4
     match day:
       case 1:
-        j = 1
+        dia = "Lunes"
       case 2:
-        j = 1
+        dia = "Martes"
       case 3:
-        j = 1
+        dia = "Miercoles"
+      case 4:
+        dia = "Jueves"
+      case 5:
+        dia = "Viernes"
+      case 6:
+        dia = "Sabado"
+      case 7:
+        dia = "Domingo"
       case _:
-        j=2
+        dia = "NoExiste"
